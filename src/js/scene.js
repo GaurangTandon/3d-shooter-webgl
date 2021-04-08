@@ -49,7 +49,7 @@ function pathToGLTF(gltfFileName) {
         if (resizeRendererToDisplaySize(renderer)) {
             const canvas = renderer.domElement;
             camera.aspect = canvas.clientWidth / canvas.clientHeight;
-            canvas.updateProjectionMatrix();
+            camera.updateProjectionMatrix();
         }
 
         renderer.render(scene, camera);
