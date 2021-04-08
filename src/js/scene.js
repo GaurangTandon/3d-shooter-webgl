@@ -35,45 +35,76 @@ function pathToGLTF(gltfFileName) {
     return `../../assets/gltf/${gltfFileName}`;
 }
 
-(function main() {
-    const canvas = document.getElementById("gamecanvas");
-    const renderer = new THREE.WebGLRenderer({canvas});
-    const camera = createCamera();
-    const scene = new THREE.Scene();
+class Game {
+    canvas = document.getElementById("gamecanvas");
+    renderer = new THREE.WebGLRenderer({"canvas": this.canvas});
+    camera = createCamera();
+    scene = new THREE.Scene();
+    previousTime = 0;
+
+    update(deltaTime) {
+        if (resizeRendererToDisplaySize(this.renderer)) {
+            const canvas = this.renderer.domElement;
+            this.camera.aspect = canvas.clientWidth / canvas.clientHeight;
+            this.camera.updateProjectionMatrix();
+        }
+    }
+
+    processInput() {
+        // TODO
+    }
 
     /**
      * main render loop of our thing
-     * @param time milliseconds time I think
      */
-    function render(time) {
-        if (resizeRendererToDisplaySize(renderer)) {
-            const canvas = renderer.domElement;
-            camera.aspect = canvas.clientWidth / canvas.clientHeight;
-            camera.updateProjectionMatrix();
-        }
-
-        renderer.render(scene, camera);
-        requestAnimationFrame(render);
+    render(time) {
+        this.renderer.render(this.scene, this.camera);
     }
 
     /**
      * @param name {String}
      */
-    function loadModel(name) {
+    loadModel(name) {
         const loader = new GLTFLoader();
         const path = pathToGLTF(name);
         loader.load(path, (gltf) => {
             const root = gltf.scene;
-            scene.add(root);
+            this.scene.add(root);
         });
     }
 
-    function setup() {
-        scene.background = new THREE.Color(0xAAAAAA);
-        loadModel("airplane.glb");
+    setup() {
+        this.scene.background = new THREE.Color(0xAAAAAA);
+        this.loadModel("airplane.glb");
     }
 
-    setup();
+    keyPressed(event) {
+    }
 
-    requestAnimationFrame(render);
-})();
+
+    gameLoop() {
+        const currTime = Date.now();
+        const deltaTime = currTime - this.previousTime;
+
+        this.update(deltaTime);
+        this.processInput();
+        this.render();
+
+        this.previousTime = currTime;
+        requestAnimationFrame(this.gameLoop.bind(this));
+    }
+
+    constructor(canvasId) {
+        this.canvas = document.getElementById(canvasId);
+        this.renderer = new THREE.WebGLRenderer({"canvas": this.canvas});
+        this.canvas.addEventListener("keydown", this.keyPressed.bind(this));
+    }
+
+    start() {
+        this.previousTime = Date.now();
+        this.setup();
+        requestAnimationFrame(this.gameLoop.bind(this));
+    }
+}
+
+export {Game};
