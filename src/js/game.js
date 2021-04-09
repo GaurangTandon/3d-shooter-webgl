@@ -1,6 +1,7 @@
 import { GLTFLoader } from "./jsm/loaders/GLTFLoader.js";
 import * as THREE from "../build/three.module.js";
 import { Vector3 } from "../build/three.module.js";
+import { OrbitControls } from "./jsm/controls/OrbitControls.js";
 
 // Game is taking place in XY plane
 // Camera is along origin in Z axis
@@ -22,13 +23,6 @@ function resizeRendererToDisplaySize(renderer) {
         renderer.setSize(width, height, false);
     }
     return needResize;
-}
-
-function createLighting() {
-    const color = 0xFFFFFF,
-        intensity = 1,
-        light = new THREE.DirectionalLight(color, intensity);
-    return light;
 }
 
 function pathToGLTF(gltfFileName) {
@@ -55,14 +49,18 @@ class Game {
     height;
 
     updateCameraProps() {
-        this.camera.left = this.canvas.clientWidth / -2;
-        this.camera.right = this.canvas.clientWidth / 2;
-        this.camera.top = this.canvas.clientHeight / 2;
-        this.camera.bottom = this.canvas.clientHeight / -2;
+        this.camera.left = -1;
+        this.camera.right = 1;
+        this.camera.top = 1;
+        this.camera.bottom = -1;
+        // this.camera.left = this.canvas.clientWidth / -2;
+        // this.camera.right = this.canvas.clientWidth / 2;
+        // this.camera.top = this.canvas.clientHeight / 2;
+        // this.camera.bottom = this.canvas.clientHeight / -2;
         this.camera.near = -1;
-        this.camera.far = 1;
+        this.camera.far = 2;
         this.camera.zoom = 1;
-        this.camera.position.z = CAMERA_Z;
+        this.camera.position.set(0, 0, 1);
     }
 
     update(_deltaTime) {
@@ -130,16 +128,7 @@ class Game {
 
         this.loadModel("airplane.glb", (model) => {
             this.player = model;
-            // this.player.position = new Vector3();
-            // this.player.scale = new Vector3(0.25, 0.25, 0.25);
         });
-
-        {
-            const light = createLighting();
-            light.position.set(-1, 0, CAMERA_Z);
-            this.scene.add(light);
-            this.scene.add(light.target);
-        }
     }
 
     // only works for ASCII
@@ -168,13 +157,29 @@ class Game {
     constructor(canvasId) {
         this.canvas = document.getElementById(canvasId);
         this.canvas.focus();
-
-        this.camera = new THREE.OrthographicCamera();
-        this.updateCameraProps();
-        this.scene = new THREE.Scene();
+        this.canvas.addEventListener("keydown", this.keyPressed.bind(this));
 
         this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas });
-        this.canvas.addEventListener("keydown", this.keyPressed.bind(this));
+
+        this.scene = new THREE.Scene();
+
+        {
+            this.camera = new THREE.OrthographicCamera();
+            this.updateCameraProps();
+            const controls = new OrbitControls(this.camera, this.canvas);
+            controls.target.set(0, 0, 0);
+            controls.update();
+        }
+
+        {
+            const color = 0xFFFFFF,
+                intensity = 1,
+                light = new THREE.DirectionalLight(color, intensity);
+
+            light.position.set(0, 0, CAMERA_Z);
+            this.scene.add(light);
+            this.scene.add(light.target);
+        }
     }
 
     resetKeys() {
