@@ -31,6 +31,13 @@ function createCamera() {
     return camera;
 }
 
+function createLighting() {
+    const color = 0xFFFFFF;
+    const intensity = 1;
+    const light = new THREE.DirectionalLight(color, intensity);
+    return light;
+}
+
 function pathToGLTF(gltfFileName) {
     return `../../assets/gltf/${gltfFileName}`;
 }
@@ -81,7 +88,6 @@ class Game {
     keyPressed(event) {
     }
 
-
     gameLoop() {
         const currTime = Date.now();
         const deltaTime = currTime - this.previousTime;
@@ -103,6 +109,12 @@ class Game {
     start() {
         this.previousTime = Date.now();
         this.setup();
+        {
+            let light = createLighting();
+            light.position.set(5, 5, 2);
+            this.scene.add(light);
+            this.scene.add(light.target);
+        }
         requestAnimationFrame(this.gameLoop.bind(this));
     }
 }
