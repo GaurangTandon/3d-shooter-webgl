@@ -63,6 +63,7 @@
         "argsIgnorePattern": "^_.+$"
       }
     ],
-    "prefer-arrow-callback": "off"
+    "prefer-arrow-callback": "off",
+    "import/extensions": "off"
   }
 }
