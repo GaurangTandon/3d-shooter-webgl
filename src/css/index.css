@@ -4,8 +4,9 @@ html, body {
 }
 
 #gamecanvas {
-    width: 100%;
+    width: 75%;
     height: 100%;
     display: block;
-    outline:none;
+    outline: none;
+    margin: 0 auto;
 }

@@ -1,4 +1,4 @@
-import {GLTFLoader} from './jsm/loaders/GLTFLoader.js'
+import { GLTFLoader } from "./jsm/loaders/GLTFLoader.js";
 import * as THREE from "../build/three.module.js";
 
 /**
@@ -7,11 +7,11 @@ import * as THREE from "../build/three.module.js";
  * @returns {boolean} whether renderer needs resize or not
  */
 function resizeRendererToDisplaySize(renderer) {
-    const canvas = renderer.domElement;
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
-    // SKIPS The part about HD-DPI images
-    const needResize = canvas.width !== width || canvas.height !== height;
+    const canvas = renderer.domElement,
+        width = canvas.clientWidth,
+        height = canvas.clientHeight,
+        // SKIPS The part about HD-DPI images
+        needResize = canvas.width !== width || canvas.height !== height;
     if (needResize) {
         renderer.setSize(width, height, false);
     }
@@ -20,21 +20,21 @@ function resizeRendererToDisplaySize(renderer) {
 
 function createCamera() {
     // parameters are based on the view frustum
-    const fov = 75;
-    const aspect = 2;  // the canvas default
-    const near = 0.1;
-    const far = 5;
+    const fov = 75,
+        aspect = 2, // the canvas default
+        near = 0.1,
+        far = 5,
 
-    const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+        camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
     camera.position.z = 2;
 
     return camera;
 }
 
 function createLighting() {
-    const color = 0xFFFFFF;
-    const intensity = 1;
-    const light = new THREE.DirectionalLight(color, intensity);
+    const color = 0xFFFFFF,
+        intensity = 1,
+        light = new THREE.DirectionalLight(color, intensity);
     return light;
 }
 
@@ -44,10 +44,16 @@ function pathToGLTF(gltfFileName) {
 
 class Game {
     canvas = document.getElementById("gamecanvas");
-    renderer = new THREE.WebGLRenderer({"canvas": this.canvas});
+
+    renderer = new THREE.WebGLRenderer({ canvas: this.canvas });
+
     camera = createCamera();
+
     scene = new THREE.Scene();
+
     previousTime = 0;
+
+    pressedKeys = [];
 
     update(deltaTime) {
         if (resizeRendererToDisplaySize(this.renderer)) {
@@ -55,10 +61,23 @@ class Game {
             this.camera.aspect = canvas.clientWidth / canvas.clientHeight;
             this.camera.updateProjectionMatrix();
         }
+
+        // move environment down by fixed speed
     }
 
     processInput() {
-        // TODO
+        const delta = {
+            A: [0, -1],
+            S: [-1, 0],
+            D: [0, 1],
+            W: [1, 0],
+        };
+
+        for (const [key, disp] of delta) {
+            if (this.isPressed(key)) {
+                // apply displacement to airplane
+            }
+        }
     }
 
     /**
@@ -72,8 +91,8 @@ class Game {
      * @param name {String}
      */
     loadModel(name) {
-        const loader = new GLTFLoader();
-        const path = pathToGLTF(name);
+        const loader = new GLTFLoader(),
+            path = pathToGLTF(name);
         loader.load(path, (gltf) => {
             const root = gltf.scene;
             this.scene.add(root);
@@ -85,12 +104,19 @@ class Game {
         this.loadModel("airplane.glb");
     }
 
+    // only works for ASCII
+    isPressed(key) {
+        return this.pressedKeys[String.fromCharCode(key)];
+    }
+
     keyPressed(event) {
+        this.resetKeys();
+        this.pressedKeys[event.keyCode] = true;
     }
 
     gameLoop() {
-        const currTime = Date.now();
-        const deltaTime = currTime - this.previousTime;
+        const currTime = Date.now(),
+            deltaTime = currTime - this.previousTime;
 
         this.update(deltaTime);
         this.processInput();
@@ -102,15 +128,21 @@ class Game {
 
     constructor(canvasId) {
         this.canvas = document.getElementById(canvasId);
-        this.renderer = new THREE.WebGLRenderer({"canvas": this.canvas});
+        this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas });
         this.canvas.addEventListener("keydown", this.keyPressed.bind(this));
+    }
+
+    resetKeys() {
+        this.pressedKeys = Array(256)
+            .fill(false);
     }
 
     start() {
         this.previousTime = Date.now();
+        this.resetKeys();
         this.setup();
         {
-            let light = createLighting();
+            const light = createLighting();
             light.position.set(5, 5, 2);
             this.scene.add(light);
             this.scene.add(light.target);
@@ -119,4 +151,4 @@ class Game {
     }
 }
 
-export {Game};
+export { Game };

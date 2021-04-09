@@ -2,3 +2,4 @@ three-master
 .idea/workspace.xml
 src/js/jsm
 src/build
+node_modules
