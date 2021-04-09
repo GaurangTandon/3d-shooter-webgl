@@ -24,20 +24,6 @@ function resizeRendererToDisplaySize(renderer) {
     return needResize;
 }
 
-function createCamera() {
-    // parameters are based on the view frustum
-    const fov = 75,
-        aspect = 2, // the canvas default
-        near = 0.1,
-        far = 5,
-
-        // TODO: change to orthographic camera
-        camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    camera.position.z = CAMERA_Z;
-
-    return camera;
-}
-
 function createLighting() {
     const color = 0xFFFFFF,
         intensity = 1,
@@ -50,13 +36,13 @@ function pathToGLTF(gltfFileName) {
 }
 
 class Game {
-    canvas = document.getElementById("gamecanvas");
+    canvas;
 
-    renderer = new THREE.WebGLRenderer({ canvas: this.canvas });
+    renderer;
 
-    camera = createCamera();
+    camera;
 
-    scene = new THREE.Scene();
+    scene;
 
     previousTime = 0;
 
@@ -64,10 +50,24 @@ class Game {
 
     player;
 
-    update(deltaTime) {
+    width;
+
+    height;
+
+    updateCameraProps() {
+        this.camera.left = this.canvas.clientWidth / -2;
+        this.camera.right = this.canvas.clientWidth / 2;
+        this.camera.top = this.canvas.clientHeight / 2;
+        this.camera.bottom = this.canvas.clientHeight / -2;
+        this.camera.near = -1;
+        this.camera.far = 1;
+        this.camera.zoom = 1;
+        this.camera.position.z = CAMERA_Z;
+    }
+
+    update(_deltaTime) {
         if (resizeRendererToDisplaySize(this.renderer)) {
-            const canvas = this.renderer.domElement;
-            this.camera.aspect = canvas.clientWidth / canvas.clientHeight;
+            this.updateCameraProps();
             this.camera.updateProjectionMatrix();
         }
 
@@ -102,7 +102,7 @@ class Game {
     /**
      * main render loop of our thing
      */
-    render(time) {
+    render(_time) {
         this.renderer.render(this.scene, this.camera);
     }
 
@@ -126,7 +126,7 @@ class Game {
         this.previousTime = Date.now();
         this.resetKeys();
 
-        this.scene.background = new THREE.Color(0xAAAAAA);
+        this.scene.background = new THREE.Color(0x00AAAA);
 
         this.loadModel("airplane.glb", (model) => {
             this.player = model;
@@ -168,6 +168,11 @@ class Game {
     constructor(canvasId) {
         this.canvas = document.getElementById(canvasId);
         this.canvas.focus();
+
+        this.camera = new THREE.OrthographicCamera();
+        this.updateCameraProps();
+        this.scene = new THREE.Scene();
+
         this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas });
         this.canvas.addEventListener("keydown", this.keyPressed.bind(this));
     }
