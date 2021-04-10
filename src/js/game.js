@@ -97,7 +97,9 @@ class Game {
         const otherObjVelocity = useDeltaTime * 0.0005;
 
         this.bgManager.update(otherObjVelocity);
-        this.enemyManager.update(otherObjVelocity);
+
+        const enemyObjVelocity = otherObjVelocity / 3;
+        this.enemyManager.update(enemyObjVelocity);
 
         this.runTime += useDeltaTime;
     }
@@ -134,6 +136,13 @@ class Game {
             if (type === Game.BG_TYPE) {
                 this.bgManager.addBg(model);
             }
+
+            model.traverse((obj) => {
+                if (obj.castShadow !== undefined) {
+                    obj.castShadow = true;
+                    obj.receiveShadow = true;
+                }
+            });
 
             if (callback) {
                 callback(model);
@@ -184,6 +193,37 @@ class Game {
         this.scene.add(mesh);
     }
 
+    /**
+     *
+     * @param name {String}
+     * @param type {String}
+     * @param count {Integer}
+     * @param callback {Function}
+     */
+    loadXModels(name, type, count, callback) {
+        // if (count <= 0) {
+        //     callback([]);
+        // }
+        //
+        // this.loadModel(name, type, (model) => {
+        //     this.loadXModels(name, type, count - 1, (models) => {
+        //         models.push(model);
+        //         callback(models);
+        //     });
+        // });
+
+        const models = [];
+        for (let i = 0; i < count; i++) {
+            this.loadModel(name, type, (model) => {
+                models.push(model);
+
+                if (models.length === count) {
+                    callback(models);
+                }
+            });
+        }
+    }
+
     start() {
         this.previousTime = Date.now();
         this.pressedKeys = Array(256)
@@ -205,11 +245,13 @@ class Game {
 
         this.addPlaneToScene();
 
-        // TODO: testing
-        const objs = this.enemyManager.addEnemyChain();
-        for (const obj of objs) {
-            this.scene.add(obj);
-        }
+        this.loadXModels("airplane.glb", "enemy", EnemyManager.ENEMY_PER_WAVE, (models) => {
+            // TODO: testing
+            const objs = this.enemyManager.addEnemyChain(models);
+            for (const obj of objs) {
+                this.scene.add(obj);
+            }
+        });
     }
 
     constructor(canvasId) {
@@ -219,6 +261,7 @@ class Game {
         this.canvas.addEventListener("keyup", this.keyUp.bind(this));
 
         this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas });
+        this.renderer.shadowMap.enabled = true;
 
         this.scene = new THREE.Scene();
 
@@ -240,12 +283,9 @@ class Game {
             shadowLight.position.set(-0.5, 0, 2);
             shadowLight.castShadow = true;
 
-            // const ch = new THREE.CameraHelper(shadowLight.shadow.camera);
-            // scene.add(ch);
+            // need to set light shadow bias and all?
 
-            // this.scene.add(hemisphereLight);
             this.scene.add(shadowLight);
-            // this.scene.add(ambientLight);
         }
     }
 }
