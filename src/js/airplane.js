@@ -16,15 +16,25 @@ class Airplane extends GameObject {
         A: [new Vector3(-1, 0, 0), new Vector3(0, -0.5, 0)],
         W: [new Vector3(0, 1, 0), undefined],
         D: [new Vector3(1, 0, 0), new Vector3(0, 0.5, 0)],
+        Q: [new Vector3(0, 0, 0), undefined],
     };
 
     constructor(model) {
         super(model);
         model.position.z = 1;
         model.position.y = -0.8;
-        this.lastBulletTime = 0;
         this.bullets = [];
         this.currentlyPressed = false;
+    }
+
+    static anyMotionKeyPressed(keys) {
+        for (const key of Object.keys(Airplane.delta)) {
+            if (isPressed(keys, key)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     processInput(deltaTime, keys) {
@@ -52,8 +62,6 @@ class Airplane extends GameObject {
         }
 
         if (!pressedAny) {
-            // TODO: enable slow motion
-
             this.rotateNone();
             this.currentlyPressed = false;
         }

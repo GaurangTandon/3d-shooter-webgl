@@ -23,7 +23,7 @@ class Background {
 
     addBg(model) {
         model.position.z = -0.555;
-        model.position.y = 3;
+        model.position.y = 2;
         model.position.x = -1 + Math.random() * 2;
         model.scale.setScalar(model.scale.x * 3);
 

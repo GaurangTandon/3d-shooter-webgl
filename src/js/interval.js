@@ -7,9 +7,7 @@ class BackgroundFiring {
         this.threshold = threshold;
     }
 
-    fire() {
-        const curr = Date.now();
-
+    fire(curr) {
         if (curr - this.lastFiring < this.threshold) {
             return false;
         }

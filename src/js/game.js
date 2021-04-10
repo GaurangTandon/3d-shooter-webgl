@@ -62,28 +62,36 @@ class Game {
 
     bgManager;
 
+    runTime = 0;
+
     update(deltaTime) {
         if (resizeRendererToDisplaySize(this.renderer)) {
             this.camera.aspect = this.canvas.clientWidth / this.canvas.clientHeight;
             this.camera.updateProjectionMatrix();
         }
 
+        const slowMowDeltaTime = deltaTime / 3,
+            useDeltaTime = Airplane.anyMotionKeyPressed(this.pressedKeys)
+                ? deltaTime : slowMowDeltaTime;
+
         if (this.player) {
             // move environment down by fixed speed
-            if (this.bulletFiring.fire()) {
+            if (this.bulletFiring.fire(this.runTime)) {
                 this.loadModel(Airplane.BULLET_GLTF, Game.BULLET_TYPE);
             }
 
-            const bulletVelocity = deltaTime * 0.001;
+            const bulletVelocity = useDeltaTime * 0.001;
             this.player.updateBullets(bulletVelocity);
         }
 
-        if (this.backgroundFiring.fire()) {
+        if (this.backgroundFiring.fire(this.runTime)) {
             const gltf = Background.randomGLTF();
             this.loadModel(gltf, Game.BG_TYPE);
         }
 
-        this.bgManager.update(deltaTime);
+        this.bgManager.update(useDeltaTime);
+
+        this.runTime += useDeltaTime;
     }
 
     processInput(deltaTime) {
@@ -150,6 +158,7 @@ class Game {
         this.previousTime = Date.now();
         this.pressedKeys = Array(256)
             .fill(false);
+        this.runTime = Date.now();
 
         this.scene.background = new THREE.Color(0x00AAAA);
 
