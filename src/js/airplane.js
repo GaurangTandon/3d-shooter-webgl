@@ -21,6 +21,7 @@ class Airplane extends GameObject {
     constructor(model) {
         super(model);
         model.position.z = 1;
+        model.position.y = -0.8;
         this.lastBulletTime = 0;
         this.bullets = [];
         this.currentlyPressed = false;
@@ -37,8 +38,12 @@ class Airplane extends GameObject {
                 pressedAny = true;
 
                 // apply displacement to airplane
-                this.displace(displacement.clone()
-                    .multiplyScalar(velocityScaling));
+                const dispy = displacement.clone()
+                    .multiplyScalar(velocityScaling);
+
+                if (this.checkDisplacementValid(dispy)) {
+                    this.displace(dispy);
+                }
 
                 if (rot) {
                     this.rotate(rot);
@@ -58,7 +63,6 @@ class Airplane extends GameObject {
         bulletObj.position.x = this.model.position.x;
         bulletObj.position.y = this.model.position.y;
         bulletObj.position.z = this.model.position.z;
-        bulletObj.scale.divideScalar(2);
         this.bullets.push(new GameObject(bulletObj));
     }
 

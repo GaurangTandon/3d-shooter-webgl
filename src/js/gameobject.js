@@ -23,6 +23,16 @@ class GameObject {
         this.model.rotation.y = rot.y;
         this.model.rotation.z = rot.z;
     }
+
+    checkDisplacementValid(displacement) {
+        function outside(x, dx) {
+            x += dx;
+            return x < -0.9 || x > 0.98;
+        }
+
+        const pos = this.model.position;
+        return !(outside(pos.x, displacement.x) || outside(pos.y, displacement.y));
+    }
 }
 
 export { GameObject };

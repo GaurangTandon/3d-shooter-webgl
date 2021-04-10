@@ -22,6 +22,7 @@ function resizeRendererToDisplaySize(renderer) {
         height = canvas.clientHeight,
         // SKIPS The part about HD-DPI images
         needResize = canvas.width !== width || canvas.height !== height;
+
     if (needResize) {
         renderer.setSize(width, height, false);
     }
@@ -61,20 +62,9 @@ class Game {
 
     bgManager;
 
-    updateCameraProps() {
-        this.camera.left = -1;
-        this.camera.right = 1;
-        this.camera.top = 1;
-        this.camera.bottom = -1;
-        this.camera.near = -1;
-        this.camera.far = 2;
-        this.camera.zoom = 1;
-        this.camera.position.set(0, 0, 1);
-    }
-
     update(deltaTime) {
         if (resizeRendererToDisplaySize(this.renderer)) {
-            this.updateCameraProps();
+            this.camera.aspect = this.canvas.clientWidth / this.canvas.clientHeight;
             this.camera.updateProjectionMatrix();
         }
 
@@ -172,6 +162,28 @@ class Game {
             this.player = new Airplane(model);
             requestAnimationFrame(this.gameLoop.bind(this));
         });
+
+        {
+            const planeSize = 5,
+                loader = new THREE.TextureLoader(),
+                texture = loader.load("../../assets/images/water.jpg");
+
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.magFilter = THREE.NearestFilter;
+            const repeats = 1; // planeSize / 2;
+            texture.repeat.set(repeats, repeats);
+
+            const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize),
+                planeMat = new THREE.MeshPhongMaterial({
+                    map: texture,
+                    side: THREE.DoubleSide,
+                }),
+                mesh = new THREE.Mesh(planeGeo, planeMat);
+            // mesh.rotation.x = Math.PI * -0.5;
+            mesh.position.z = -0.855;
+            this.scene.add(mesh);
+        }
     }
 
     constructor(canvasId) {
@@ -185,17 +197,21 @@ class Game {
         this.scene = new THREE.Scene();
 
         {
-            this.camera = new THREE.OrthographicCamera();
-            this.updateCameraProps();
+            const fov = 45,
+                aspect = 2, // the canvas default
+                near = 0.1,
+                far = 100;
+            this.camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+            this.camera.position.set(0, 0, 3);
             const controls = new OrbitControls(this.camera, this.canvas);
             controls.target.set(0, 0, 0);
             controls.update();
         }
 
         {
-            const shadowLight = new THREE.PointLight(0xff00ff, 2);
+            const shadowLight = new THREE.DirectionalLight(0xffffff, 1);
 
-            shadowLight.position.set(-0.5, 0, CAMERA_Z);
+            shadowLight.position.set(-0.5, 0, 2);
             shadowLight.castShadow = true;
 
             // const ch = new THREE.CameraHelper(shadowLight.shadow.camera);

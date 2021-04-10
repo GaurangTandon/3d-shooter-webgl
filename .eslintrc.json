@@ -29,7 +29,7 @@
     "func-names": "off",
     "no-multi-assign": "off",
     "no-plusplus": "off",
-    "no-magic-numbers": "warn",
+    "no-magic-numbers": "off",
     "no-param-reassign": "off",
     "no-extend-native": "off",
     "one-var": [
