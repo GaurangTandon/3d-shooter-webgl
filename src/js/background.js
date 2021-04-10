@@ -10,8 +10,7 @@ class Background {
         this.backgrounds = [];
     }
 
-    update(deltaTime) {
-        const velocity = deltaTime * 0.0005;
+    update(velocity) {
         for (const bg of this.backgrounds) {
             bg.displace(new Vector3(0, -velocity, 0));
         }

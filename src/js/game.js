@@ -4,12 +4,12 @@ import { OrbitControls } from "./jsm/controls/OrbitControls.js";
 import { Airplane } from "./airplane.js";
 import { BackgroundFiring } from "./interval.js";
 import { Background } from "./background.js";
+import { EnemyManager } from "./enemyManager.js";
 
 // Game is taking place in XY plane
 // Camera is along origin in Z axis
 
-const CAMERA_Z = 2,
-    SCALE = 1 / 10;
+const SCALE = 1 / 10;
 
 /**
  *
@@ -64,15 +64,20 @@ class Game {
 
     runTime = 0;
 
-    update(deltaTime) {
+    enemyManager;
+
+    update(deltaTimeActual) {
         if (resizeRendererToDisplaySize(this.renderer)) {
             this.camera.aspect = this.canvas.clientWidth / this.canvas.clientHeight;
             this.camera.updateProjectionMatrix();
         }
 
-        const slowMowDeltaTime = deltaTime / 3,
+        let useDeltaTime;
+        {
+            const slowMowDeltaTime = deltaTimeActual / 3;
             useDeltaTime = Airplane.anyMotionKeyPressed(this.pressedKeys)
-                ? deltaTime : slowMowDeltaTime;
+                ? deltaTimeActual : slowMowDeltaTime;
+        }
 
         if (this.player) {
             // move environment down by fixed speed
@@ -89,7 +94,10 @@ class Game {
             this.loadModel(gltf, Game.BG_TYPE);
         }
 
-        this.bgManager.update(useDeltaTime);
+        const otherObjVelocity = useDeltaTime * 0.0005;
+
+        this.bgManager.update(otherObjVelocity);
+        this.enemyManager.update(otherObjVelocity);
 
         this.runTime += useDeltaTime;
     }
@@ -154,6 +162,28 @@ class Game {
         requestAnimationFrame(this.gameLoop.bind(this));
     }
 
+    addPlaneToScene() {
+        const planeSize = 5,
+            loader = new THREE.TextureLoader(),
+            texture = loader.load("../../assets/images/water.jpg");
+
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.magFilter = THREE.NearestFilter;
+        const repeats = 1; // planeSize / 2;
+        texture.repeat.set(repeats, repeats);
+
+        const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize),
+            planeMat = new THREE.MeshPhongMaterial({
+                map: texture,
+                side: THREE.DoubleSide,
+            }),
+            mesh = new THREE.Mesh(planeGeo, planeMat);
+        // mesh.rotation.x = Math.PI * -0.5;
+        mesh.position.z = -0.855;
+        this.scene.add(mesh);
+    }
+
     start() {
         this.previousTime = Date.now();
         this.pressedKeys = Array(256)
@@ -166,32 +196,19 @@ class Game {
         this.bulletFiring = new BackgroundFiring(Airplane.BULLET_INTERVAL);
 
         this.bgManager = new Background();
+        this.enemyManager = new EnemyManager();
 
         this.loadModel("airplane.glb", "player", (model) => {
             this.player = new Airplane(model);
             requestAnimationFrame(this.gameLoop.bind(this));
         });
 
-        {
-            const planeSize = 5,
-                loader = new THREE.TextureLoader(),
-                texture = loader.load("../../assets/images/water.jpg");
+        this.addPlaneToScene();
 
-            texture.wrapS = THREE.RepeatWrapping;
-            texture.wrapT = THREE.RepeatWrapping;
-            texture.magFilter = THREE.NearestFilter;
-            const repeats = 1; // planeSize / 2;
-            texture.repeat.set(repeats, repeats);
-
-            const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize),
-                planeMat = new THREE.MeshPhongMaterial({
-                    map: texture,
-                    side: THREE.DoubleSide,
-                }),
-                mesh = new THREE.Mesh(planeGeo, planeMat);
-            // mesh.rotation.x = Math.PI * -0.5;
-            mesh.position.z = -0.855;
-            this.scene.add(mesh);
+        // TODO: testing
+        const objs = this.enemyManager.addEnemyChain();
+        for (const obj of objs) {
+            this.scene.add(obj);
         }
     }
 
