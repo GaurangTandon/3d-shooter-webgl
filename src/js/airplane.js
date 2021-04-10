@@ -2,8 +2,6 @@ import { GameObject } from "./gameobject.js";
 import { Vector3 } from "../build/three.module.js";
 
 class Airplane extends GameObject {
-    lastBulletTime;
-
     bullets;
 
     static BULLET_INTERVAL = 1000;
@@ -14,17 +12,6 @@ class Airplane extends GameObject {
         super(model);
         this.lastBulletTime = 0;
         this.bullets = [];
-    }
-
-    fire() {
-        const currTime = Date.now();
-
-        if (currTime - this.lastBulletTime < Airplane.BULLET_INTERVAL) {
-            return false;
-        }
-
-        this.lastBulletTime = currTime;
-        return true;
     }
 
     addBullet(bulletObj) {

@@ -3,6 +3,8 @@ import * as THREE from "../build/three.module.js";
 import { Vector3 } from "../build/three.module.js";
 import { OrbitControls } from "./jsm/controls/OrbitControls.js";
 import { Airplane } from "./airplane.js";
+import { BackgroundFiring } from "./interval.js";
+import { Background } from "./background.js";
 
 // Game is taking place in XY plane
 // Camera is along origin in Z axis
@@ -52,6 +54,14 @@ class Game {
 
     static BULLET_TYPE = "bullet";
 
+    static BG_TYPE = "background";
+
+    backgroundFiring;
+
+    bulletFiring;
+
+    bgManager;
+
     updateCameraProps() {
         this.camera.left = -1;
         this.camera.right = 1;
@@ -71,13 +81,20 @@ class Game {
 
         if (this.player) {
             // move environment down by fixed speed
-            if (this.player.fire()) {
+            if (this.bulletFiring.fire()) {
                 this.loadModel(Airplane.BULLET_GLTF, Game.BULLET_TYPE);
             }
 
             const bulletVelocity = deltaTime * 0.001;
             this.player.updateBullets(bulletVelocity);
         }
+
+        if (this.backgroundFiring.fire()) {
+            const gltf = Background.randomGLTF();
+            this.loadModel(gltf, Game.BG_TYPE);
+        }
+
+        this.bgManager.update(deltaTime);
     }
 
     processInput(deltaTime) {
@@ -114,35 +131,29 @@ class Game {
 
     /**
      * @param name {String}
+     * @param type {String}
+     * @param [callback] {Function}
      */
     loadModel(name, type, callback) {
         const loader = new GLTFLoader(),
             path = pathToGLTF(name);
 
         loader.load(path, (gltf) => {
-            const root = gltf.scene;
-            this.scene.add(root);
-            root.scale.setScalar(SCALE);
+            const model = gltf.scene;
+            this.scene.add(model);
+            model.scale.setScalar(SCALE);
 
             if (type === Game.BULLET_TYPE) {
-                this.player.addBullet(root);
+                this.player.addBullet(model);
+            }
+
+            if (type === Game.BG_TYPE) {
+                this.bgManager.addBg(model);
             }
 
             if (callback) {
-                callback(root);
+                callback(model);
             }
-        });
-    }
-
-    setup() {
-        this.previousTime = Date.now();
-        this.resetKeys();
-
-        this.scene.background = new THREE.Color(0x00AAAA);
-
-        this.loadModel("airplane.glb", "player", (model) => {
-            this.player = new Airplane(model);
-            model.rotation.x = 90;
         });
     }
 
@@ -167,6 +178,22 @@ class Game {
         this.resetKeys();
 
         requestAnimationFrame(this.gameLoop.bind(this));
+    }
+
+    setup() {
+        this.previousTime = Date.now();
+        this.resetKeys();
+
+        this.scene.background = new THREE.Color(0x00AAAA);
+
+        this.loadModel("airplane.glb", "player", (model) => {
+            this.player = new Airplane(model);
+        });
+
+        this.backgroundFiring = new BackgroundFiring(Background.INTERVAL);
+        this.bulletFiring = new BackgroundFiring(Airplane.BULLET_INTERVAL);
+
+        this.bgManager = new Background();
     }
 
     constructor(canvasId) {
