@@ -245,8 +245,8 @@ class Game {
 
         this.addPlaneToScene();
 
-        this.loadXModels("airplane.glb", "enemy", EnemyManager.ENEMY_PER_WAVE, (models) => {
-            // TODO: testing
+        // TODO: actually randomly spawn enemies
+        this.loadXModels("enemy-jet.glb", "enemy", EnemyManager.ENEMY_PER_WAVE, (models) => {
             const objs = this.enemyManager.addEnemyChain(models);
             for (const obj of objs) {
                 this.scene.add(obj);

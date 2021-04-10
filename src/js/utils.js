@@ -3,4 +3,6 @@ function isPressed(keys, key) {
     return keys[key.charCodeAt(0)];
 }
 
-export { isPressed };
+const PLAYER_Z = 1;
+
+export { isPressed, PLAYER_Z };

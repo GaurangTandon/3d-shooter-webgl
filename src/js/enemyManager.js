@@ -2,16 +2,18 @@ import {
     EllipseCurve, BufferGeometry, Line, LineBasicMaterial, Vector3,
 } from "../build/three.module.js";
 import { GameObject } from "./gameobject.js";
+import { PLAYER_Z } from "./utils.js";
 
 class CurveObject extends GameObject {
     lengthTraversed;
 
+    over;
+
     constructor(model) {
         super(model);
-        // model.rotation.y = Math.PI;
-        // model.rotation.x = Math.PI / 2;
 
         this.lengthTraversed = 0;
+        this.over = false;
     }
 
     /**
@@ -20,6 +22,18 @@ class CurveObject extends GameObject {
      * @param lengthAdd {Float}
      */
     update(curve, curveObject, lengthAdd) {
+        if (this.over) {
+            return false;
+        }
+
+        if (this.lengthTraversed >= 1) {
+            this.model.position.x = 2;
+            this.model.position.y = 2;
+            this.model.position.z = 0;
+            this.over = true;
+            return false;
+        }
+
         const carPosition = new Vector3(),
             carTarget = new Vector3();
 
@@ -33,20 +47,22 @@ class CurveObject extends GameObject {
         // put the car at the first point (temporarily)
         this.model.position.copy(carPosition);
 
-        const dirn = carTarget.clone()
-                .sub(carPosition)
-                .normalize(),
-            dirnVec = carPosition.clone()
-                .add(dirn.multiplyScalar(20));
-        // point the car the second point
-        this.model.lookAt(dirnVec);
+        // const dirn = carTarget.clone()
+        //         .sub(carPosition)
+        //         .normalize(),
+        //     dirnVec = carPosition.clone()
+        //         .add(dirn.multiplyScalar(20));
 
-        console.log(carTarget, carPosition, dirnVec);
+        // point the car the second point
+        // TODO: fix models in blender so that they look the correct way
+        this.model.lookAt(carTarget);
 
         // put the car between the 2 points
         this.model.position.lerpVectors(carPosition, carTarget, 0.5);
 
         this.lengthTraversed += lengthAdd;
+
+        return true;
     }
 }
 
@@ -62,7 +78,7 @@ class EnemyWave {
     constructor(curveType, enemyObjects) {
         if (curveType === "circle") {
             // docs: https://threejs.org/docs/#api/en/extras/curves/EllipseCurve
-            this.curve = new EllipseCurve(0, 0, 1, 1, 0, 2 * Math.PI, false, 0);
+            this.curve = new EllipseCurve(0.8, 0.8, 1, 1, 0, 2 * Math.PI, false, 0);
         } else if (curveType === "ellipse") {
             this.curve = new EllipseCurve(0, 0, 1, 1, 0, 2 * Math.PI, false, 0);
         } else if (curveType === "vline") {
@@ -78,10 +94,12 @@ class EnemyWave {
             material = new LineBasicMaterial({ color: 0xff0000 }),
             curveObject = new Line(geometry, material);
 
+        curveObject.position.z = PLAYER_Z;
+
         this.enemies = [];
         for (let i = 0; i < EnemyManager.ENEMY_PER_WAVE; i++) {
             const enemy = new CurveObject(enemyObjects[i]);
-            enemy.lengthTraversed = i * 0.01;
+            enemy.lengthTraversed = i * 0.08;
             this.enemies.push(enemy);
         }
 
@@ -92,9 +110,17 @@ class EnemyWave {
     }
 
     update(velocity) {
-        for (const enemy of this.enemies) {
-            enemy.update(this.curve, this.curveObject, velocity);
+        if (!this.cycleComplete) {
+            let allOver = true;
+            for (const enemy of this.enemies) {
+                allOver = !enemy.update(this.curve, this.curveObject, velocity) && allOver;
+            }
+            if (allOver) {
+                this.cycleComplete = true;
+            }
         }
+
+        return !this.cycleComplete;
     }
 }
 

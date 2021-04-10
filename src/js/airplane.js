@@ -1,6 +1,6 @@
 import { GameObject } from "./gameobject.js";
 import { Vector3 } from "../build/three.module.js";
-import { isPressed } from "./utils.js";
+import { isPressed, PLAYER_Z } from "./utils.js";
 
 class Airplane extends GameObject {
     bullets;
@@ -21,7 +21,7 @@ class Airplane extends GameObject {
 
     constructor(model) {
         super(model);
-        model.position.z = 1;
+        model.position.z = PLAYER_Z;
         model.position.y = -0.8;
         this.bullets = [];
         this.currentlyPressed = false;
