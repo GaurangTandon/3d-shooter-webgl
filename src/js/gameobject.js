@@ -1,12 +1,16 @@
 class GameObject {
-    position;
+    model;
 
-    constructor(position) {
-        this.position = position;
+    constructor(model) {
+        this.model = model;
     }
 
     displace(displacement) {
-        this.position;
+        this.model.position.add(displacement);
+    }
+
+    outOfFrame() {
+        return false;
     }
 }
 

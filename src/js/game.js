@@ -2,11 +2,13 @@ import { GLTFLoader } from "./jsm/loaders/GLTFLoader.js";
 import * as THREE from "../build/three.module.js";
 import { Vector3 } from "../build/three.module.js";
 import { OrbitControls } from "./jsm/controls/OrbitControls.js";
+import { Airplane } from "./airplane.js";
 
 // Game is taking place in XY plane
 // Camera is along origin in Z axis
 
-const CAMERA_Z = 2;
+const CAMERA_Z = 2,
+    SCALE = 1 / 10;
 
 /**
  *
@@ -48,28 +50,34 @@ class Game {
 
     height;
 
+    static BULLET_TYPE = "bullet";
+
     updateCameraProps() {
         this.camera.left = -1;
         this.camera.right = 1;
         this.camera.top = 1;
         this.camera.bottom = -1;
-        // this.camera.left = this.canvas.clientWidth / -2;
-        // this.camera.right = this.canvas.clientWidth / 2;
-        // this.camera.top = this.canvas.clientHeight / 2;
-        // this.camera.bottom = this.canvas.clientHeight / -2;
         this.camera.near = -1;
         this.camera.far = 2;
         this.camera.zoom = 1;
         this.camera.position.set(0, 0, 1);
     }
 
-    update(_deltaTime) {
+    update(deltaTime) {
         if (resizeRendererToDisplaySize(this.renderer)) {
             this.updateCameraProps();
             this.camera.updateProjectionMatrix();
         }
 
-        // move environment down by fixed speed
+        if (this.player) {
+            // move environment down by fixed speed
+            if (this.player.fire()) {
+                this.loadModel(Airplane.BULLET_GLTF, Game.BULLET_TYPE);
+            }
+
+            const bulletVelocity = deltaTime * 0.001;
+            this.player.updateBullets(bulletVelocity);
+        }
     }
 
     processInput(deltaTime) {
@@ -88,7 +96,7 @@ class Game {
                 playerMoved = true;
 
                 // apply displacement to airplane
-                this.player.position.add(disp.multiplyScalar(velocityScaling));
+                this.player.displace(disp.multiplyScalar(velocityScaling));
             }
         }
 
@@ -107,12 +115,18 @@ class Game {
     /**
      * @param name {String}
      */
-    loadModel(name, callback) {
+    loadModel(name, type, callback) {
         const loader = new GLTFLoader(),
             path = pathToGLTF(name);
+
         loader.load(path, (gltf) => {
             const root = gltf.scene;
             this.scene.add(root);
+            root.scale.setScalar(SCALE);
+
+            if (type === Game.BULLET_TYPE) {
+                this.player.addBullet(root);
+            }
 
             if (callback) {
                 callback(root);
@@ -126,8 +140,9 @@ class Game {
 
         this.scene.background = new THREE.Color(0x00AAAA);
 
-        this.loadModel("airplane.glb", (model) => {
-            this.player = model;
+        this.loadModel("airplane.glb", "player", (model) => {
+            this.player = new Airplane(model);
+            model.rotation.x = 90;
         });
     }
 
