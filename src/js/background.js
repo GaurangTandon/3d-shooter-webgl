@@ -22,8 +22,9 @@ class Background {
     }
 
     addBg(model) {
-        model.position.z = 2;
+        model.position.z = -1;
         model.position.y = 1;
+        model.position.x = -1 + Math.random() * 2;
 
         this.backgrounds.push(new GameObject(model));
     }

@@ -98,28 +98,7 @@ class Game {
     }
 
     processInput(deltaTime) {
-        const delta = {
-                S: new Vector3(0, -1, 0),
-                A: new Vector3(-1, 0, 0),
-                W: new Vector3(0, 1, 0),
-                D: new Vector3(1, 0, 0),
-            },
-            velocityScaling = deltaTime * 0.001;
-
-        let playerMoved = false;
-
-        for (const [key, disp] of Object.entries(delta)) {
-            if (this.isPressed(key)) {
-                playerMoved = true;
-
-                // apply displacement to airplane
-                this.player.displace(disp.multiplyScalar(velocityScaling));
-            }
-        }
-
-        if (!playerMoved) {
-            // TOOD: enable slowmo
-        }
+        this.player.processInput(deltaTime, this.pressedKeys.slice(0));
     }
 
     /**
@@ -157,11 +136,6 @@ class Game {
         });
     }
 
-    // only works for ASCII
-    isPressed(key) {
-        return this.pressedKeys[key.charCodeAt(0)];
-    }
-
     keyPressed(event) {
         this.pressedKeys[event.keyCode] = true;
     }
@@ -180,20 +154,21 @@ class Game {
         requestAnimationFrame(this.gameLoop.bind(this));
     }
 
-    setup() {
+    start() {
         this.previousTime = Date.now();
         this.resetKeys();
 
         this.scene.background = new THREE.Color(0x00AAAA);
 
-        this.loadModel("airplane.glb", "player", (model) => {
-            this.player = new Airplane(model);
-        });
-
         this.backgroundFiring = new BackgroundFiring(Background.INTERVAL);
         this.bulletFiring = new BackgroundFiring(Airplane.BULLET_INTERVAL);
 
         this.bgManager = new Background();
+
+        this.loadModel("airplane.glb", "player", (model) => {
+            this.player = new Airplane(model);
+            requestAnimationFrame(this.gameLoop.bind(this));
+        });
     }
 
     constructor(canvasId) {
@@ -214,24 +189,23 @@ class Game {
         }
 
         {
-            const color = 0xFFFFFF,
-                intensity = 1,
-                light = new THREE.DirectionalLight(color, intensity);
+            const shadowLight = new THREE.PointLight(0xff00ff, 2);
 
-            light.position.set(0, 0, CAMERA_Z);
-            this.scene.add(light);
-            this.scene.add(light.target);
+            shadowLight.position.set(-0.5, 0, CAMERA_Z);
+            shadowLight.castShadow = true;
+
+            // const ch = new THREE.CameraHelper(shadowLight.shadow.camera);
+            // scene.add(ch);
+
+            // this.scene.add(hemisphereLight);
+            this.scene.add(shadowLight);
+            // this.scene.add(ambientLight);
         }
     }
 
     resetKeys() {
         this.pressedKeys = Array(256)
             .fill(false);
-    }
-
-    start() {
-        this.setup();
-        requestAnimationFrame(this.gameLoop.bind(this));
     }
 }
 

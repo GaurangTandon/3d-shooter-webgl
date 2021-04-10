@@ -1,5 +1,6 @@
 import { GameObject } from "./gameobject.js";
 import { Vector3 } from "../build/three.module.js";
+import { isPressed } from "./utils.js";
 
 class Airplane extends GameObject {
     bullets;
@@ -8,10 +9,45 @@ class Airplane extends GameObject {
 
     static BULLET_GLTF = "bullet.glb";
 
+    lastKeyPress;
+
+    static delta = {
+        S: [new Vector3(0, -1, 0), undefined],
+        A: [new Vector3(-1, 0, 0), new Vector3(0, -0.5, 0)],
+        W: [new Vector3(0, 1, 0), undefined],
+        D: [new Vector3(1, 0, 0), new Vector3(0, 0.5, 0)],
+    };
+
     constructor(model) {
         super(model);
+        model.position.z = 1;
         this.lastBulletTime = 0;
         this.bullets = [];
+    }
+
+    processInput(deltaTime, keys) {
+        const velocityScaling = deltaTime * 0.001;
+
+        let playerMoved = false;
+
+        for (const [key, [displacement, rot]] of Object.entries(Airplane.delta)) {
+            if (isPressed(keys, key)) {
+                playerMoved = true;
+
+                // apply displacement to airplane
+                this.displace(displacement.clone()
+                    .multiplyScalar(velocityScaling));
+
+                if (rot) {
+                    this.rotate(rot);
+                }
+            }
+        }
+
+        if (!playerMoved) {
+            // TODO: enable slow motion
+            // this.player.rotateNone();
+        }
     }
 
     addBullet(bulletObj) {
