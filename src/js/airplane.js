@@ -9,7 +9,7 @@ class Airplane extends GameObject {
 
     static BULLET_GLTF = "bullet.glb";
 
-    lastKeyPress;
+    currentlyPressed;
 
     static delta = {
         S: [new Vector3(0, -1, 0), undefined],
@@ -23,16 +23,18 @@ class Airplane extends GameObject {
         model.position.z = 1;
         this.lastBulletTime = 0;
         this.bullets = [];
+        this.currentlyPressed = false;
     }
 
     processInput(deltaTime, keys) {
         const velocityScaling = deltaTime * 0.001;
 
-        let playerMoved = false;
+        let pressedAny = false;
 
         for (const [key, [displacement, rot]] of Object.entries(Airplane.delta)) {
             if (isPressed(keys, key)) {
-                playerMoved = true;
+                this.currentlyPressed = true;
+                pressedAny = true;
 
                 // apply displacement to airplane
                 this.displace(displacement.clone()
@@ -44,9 +46,11 @@ class Airplane extends GameObject {
             }
         }
 
-        if (!playerMoved) {
+        if (!pressedAny) {
             // TODO: enable slow motion
-            // this.player.rotateNone();
+
+            this.rotateNone();
+            this.currentlyPressed = false;
         }
     }
 

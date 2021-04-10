@@ -1,6 +1,5 @@
 import { GLTFLoader } from "./jsm/loaders/GLTFLoader.js";
 import * as THREE from "../build/three.module.js";
-import { Vector3 } from "../build/three.module.js";
 import { OrbitControls } from "./jsm/controls/OrbitControls.js";
 import { Airplane } from "./airplane.js";
 import { BackgroundFiring } from "./interval.js";
@@ -136,8 +135,12 @@ class Game {
         });
     }
 
-    keyPressed(event) {
+    keyDown(event) {
         this.pressedKeys[event.keyCode] = true;
+    }
+
+    keyUp(event) {
+        this.pressedKeys[event.keyCode] = false;
     }
 
     gameLoop() {
@@ -149,14 +152,14 @@ class Game {
         this.render();
 
         this.previousTime = currTime;
-        this.resetKeys();
 
         requestAnimationFrame(this.gameLoop.bind(this));
     }
 
     start() {
         this.previousTime = Date.now();
-        this.resetKeys();
+        this.pressedKeys = Array(256)
+            .fill(false);
 
         this.scene.background = new THREE.Color(0x00AAAA);
 
@@ -174,7 +177,8 @@ class Game {
     constructor(canvasId) {
         this.canvas = document.getElementById(canvasId);
         this.canvas.focus();
-        this.canvas.addEventListener("keydown", this.keyPressed.bind(this));
+        this.canvas.addEventListener("keydown", this.keyDown.bind(this));
+        this.canvas.addEventListener("keyup", this.keyUp.bind(this));
 
         this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas });
 
@@ -201,11 +205,6 @@ class Game {
             this.scene.add(shadowLight);
             // this.scene.add(ambientLight);
         }
-    }
-
-    resetKeys() {
-        this.pressedKeys = Array(256)
-            .fill(false);
     }
 }
 
