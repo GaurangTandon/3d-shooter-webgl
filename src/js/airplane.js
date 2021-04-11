@@ -23,14 +23,23 @@ class Airplane extends GameObject {
         Q: [new Vector3(0, 0, 0), undefined],
     };
 
-    constructor(model) {
-        super(model);
-        model.position.z = PLAYER_Z;
-        model.position.y = -0.8;
-        this.bullets = [];
+    reset() {
+        this.model.position.z = PLAYER_Z;
+        this.model.position.y = -0.8;
         this.currentlyPressed = false;
         this.score = 0;
         this.health = 100;
+
+        for (const bullet of this.bullets) {
+            bullet.kick();
+        }
+        this.bullets = [];
+    }
+
+    constructor(model) {
+        super(model);
+        this.bullets = [];
+        this.reset();
     }
 
     static anyMotionKeyPressed(keys) {
@@ -94,6 +103,10 @@ class Airplane extends GameObject {
 
     hitCoin() {
         this.score += 10;
+    }
+
+    hitEnemy() {
+        this.score += 20;
     }
 }
 

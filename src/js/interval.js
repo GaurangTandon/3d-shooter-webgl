@@ -15,6 +15,10 @@ class BackgroundFiring {
         this.lastFiring = curr;
         return true;
     }
+
+    reset() {
+        this.lastFiring = 0;
+    }
 }
 
 export { BackgroundFiring };

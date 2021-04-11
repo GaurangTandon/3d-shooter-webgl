@@ -42,6 +42,11 @@ class Background {
         this.tracker.track(model);
         this.backgrounds.push(new GameObject(model));
     }
+
+    reset() {
+        this.tracker.dispose();
+        this.backgrounds = [];
+    }
 }
 
 class Lighthouse extends Background {

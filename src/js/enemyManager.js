@@ -21,7 +21,7 @@ class CurveObject extends GameObject {
      * @param curveObject {BufferGeometr}
      * @param lengthAdd {Float}
      */
-    update(curve, curveObject, lengthAdd) {
+    update(curve, curveObject, lengthAdd, runTime) {
         if (this.over) {
             return false;
         }
@@ -49,7 +49,7 @@ class CurveObject extends GameObject {
 
         for (let i = 0; i < 2; i++) {
             const wing = this.model.children[i];
-            wing.rotation.y += lengthAdd * 5;
+            wing.rotation.y = runTime * 2;
         }
 
         this.lengthTraversed += lengthAdd;
@@ -78,6 +78,11 @@ class EnemyWave {
         [0.5, 0.6],
         [-0.5, -0.6],
     ];
+
+    kick(enemy) {
+        enemy.kick();
+        this.resources.dispose(enemy.getUuid());
+    }
 
     constructor(curveType, enemyObjects) {
         this.resources = new ResourceTracker();
@@ -113,6 +118,7 @@ class EnemyWave {
         this.enemies = [];
         for (let i = 0; i < EnemyManager.ENEMY_PER_WAVE; i++) {
             const gltf = enemyObjects[i];
+
             this.resources.track(gltf);
 
             const enemy = new CurveObject(gltf);
@@ -126,11 +132,11 @@ class EnemyWave {
         this.cycleComplete = false;
     }
 
-    update(velocity) {
+    update(velocity, runTime) {
         if (!this.cycleComplete) {
             let allOver = true;
             for (const enemy of this.enemies) {
-                allOver = !enemy.update(this.curve, this.curveObject, velocity) && allOver;
+                allOver = !enemy.update(this.curve, this.curveObject, velocity, runTime) && allOver;
             }
 
             if (allOver) {
@@ -141,24 +147,43 @@ class EnemyWave {
     }
 
     checkPlaneCollision(position, threshold) {
-        for (const enemy of this.enemies) {
-            if (enemy.colliding(position, threshold)) {
-                // TODO: game over
-                console.log("HIT");
-            }
+        if (this.cycleComplete) {
+            return false;
         }
-    }
 
-    checkBulletCollision(position, threshold) {
         for (const enemy of this.enemies) {
-            if (enemy.colliding(position, threshold)) {
-                enemy.kick();
-                this.resources.dispose(enemy.getUuid());
+            if (!enemy.over && enemy.colliding(position, threshold)) {
+                this.kick(enemy);
                 return true;
             }
         }
+        return false;
+    }
+
+    checkBulletCollision(position, threshold) {
+        if (this.cycleComplete) {
+            return false;
+        }
+
+        let i = 0;
+
+        for (const enemy of this.enemies) {
+            if (!enemy.over && enemy.colliding(position, threshold)) {
+                this.kick(enemy);
+                return true;
+            }
+            i += 1;
+        }
 
         return false;
+    }
+
+    reset() {
+        for (const enemy of this.enemies) {
+            this.kick(enemy);
+        }
+
+        this.resources.dispose();
     }
 }
 
@@ -170,6 +195,13 @@ class EnemyManager {
     static SPAWN_INTERVAL = 10000;
 
     constructor() {
+        this.enemyGroups = [];
+    }
+
+    reset() {
+        for (const group of this.enemyGroups) {
+            group.reset();
+        }
         this.enemyGroups = [];
     }
 
@@ -187,9 +219,9 @@ class EnemyManager {
         return objs;
     }
 
-    update(velocity) {
+    update(velocity, runTime) {
         for (const cycle of this.enemyGroups) {
-            cycle.update(velocity);
+            cycle.update(velocity, runTime);
         }
     }
 

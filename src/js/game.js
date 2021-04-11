@@ -140,15 +140,17 @@ class Game {
         this.bgManager.update(otherObjVelocity);
 
         const enemyObjVelocity = otherObjVelocity / 3;
-        this.enemyManager.update(enemyObjVelocity);
+        this.enemyManager.update(enemyObjVelocity, this.elapsedSeconds());
 
-        if (this.enemyManager.checkPlaneCollision(this.player.getPosition(), 0.3)) {
-
+        if (this.enemyManager.checkPlaneCollision(this.player.getPosition(), 0.1)) {
+            this.gameFiniss();
+            return;
         }
 
         for (const bullet of this.player.bullets) {
             if (this.enemyManager.checkBulletCollision(bullet.getPosition(), 0.1)) {
                 bullet.kick();
+                this.player.hitEnemy();
             }
         }
 
@@ -250,6 +252,32 @@ class Game {
             .toggle("hide");
     }
 
+    gameFiniss() {
+        this.gameState = Game.GameOver;
+        Game.toggleGameHUD();
+        Game.toggleGameOverText();
+        document.querySelector(".overscore").innerHTML = this.player.score.toString();
+    }
+
+    getGameReady() {
+        Game.toggleGameHUD();
+        this.gameState = Game.GameActive;
+        this.enemyManager.reset();
+        this.coinManager.reset();
+        this.player.reset();
+        this.bgManager.reset();
+
+        this.backgroundFiring.reset();
+        this.bulletFiring.reset();
+        this.coinFiring.reset();
+        this.enemySpawnFiring.reset();
+
+        this.previousTime = Date.now();
+        this.pressedKeys = Array(256)
+            .fill(false);
+        this.runTime = this.startTime = Date.now();
+    }
+
     gameLoop() {
         if (this.gameState === Game.GameActive) {
             const currTime = Date.now(),
@@ -262,10 +290,12 @@ class Game {
         } else if (isPressed(this.pressedKeys, " ")) {
             if (this.gameState === Game.GameReady) {
                 Game.toggleGameReadyText();
-                Game.toggleGameHUD();
-                this.gameState = Game.GameActive;
+
+                this.getGameReady();
             } else {
                 Game.toggleGameOverText();
+                Game.toggleGameReadyText();
+
                 this.gameState = Game.GameReady;
             }
         }
@@ -318,11 +348,6 @@ class Game {
     }
 
     start() {
-        this.previousTime = Date.now();
-        this.pressedKeys = Array(256)
-            .fill(false);
-        this.runTime = this.startTime = Date.now();
-
         this.activeScene.background = new THREE.Color(0x00AAAA);
         this.blankScene.background = new THREE.Color(0x00AAAA);
 
@@ -335,16 +360,14 @@ class Game {
         this.enemyManager = new EnemyManager();
         this.coinManager = new Coins();
 
-        Game.toggleGameReadyText();
-
         this.loadModel("airplane.glb", "player", (model) => {
-            console.log(model);
             this.player = new Airplane(model);
             requestAnimationFrame(this.gameLoop.bind(this));
         });
 
         this.addPlaneToScene();
 
+        Game.toggleGameReadyText();
         this.gameState = Game.GameReady;
     }
 

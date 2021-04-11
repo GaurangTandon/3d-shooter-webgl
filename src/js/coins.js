@@ -17,6 +17,11 @@ class Coins {
         this.tracker = new ResourceTracker();
     }
 
+    reset() {
+        this.tracker.dispose();
+        this.coins = [];
+    }
+
     addCoin(model) {
         model.position.z = PLAYER_Z;
         model.position.y = 1;
@@ -47,7 +52,7 @@ class Coins {
 
     checkCollision(position, threshold) {
         for (const coin of this.coins) {
-            if (coin.colliding(position, threshold)) {
+            if (!coin.over && coin.colliding(position, threshold)) {
                 coin.kick();
                 this.tracker.dispose(coin.getUuid());
                 return true;

@@ -49,6 +49,7 @@ class GameObject {
         this.model.position.x = 3;
         this.model.position.y = 3;
         this.model.position.z = 2;
+        this.over = true;
     }
 
     getUuid() {
