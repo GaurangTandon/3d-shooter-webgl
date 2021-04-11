@@ -5,4 +5,8 @@ function isPressed(keys, key) {
 
 const PLAYER_Z = 1;
 
-export { isPressed, PLAYER_Z };
+function randomChoose(lst) {
+    return lst[Math.floor(Math.random() * lst.length)];
+}
+
+export { isPressed, PLAYER_Z, randomChoose };

@@ -5,6 +5,7 @@ import { Airplane } from "./airplane.js";
 import { BackgroundFiring } from "./interval.js";
 import { Background } from "./background.js";
 import { EnemyManager } from "./enemyManager.js";
+import { isPressed } from "./utils.js";
 
 // Game is taking place in XY plane
 // Camera is along origin in Z axis
@@ -40,7 +41,9 @@ class Game {
 
     camera;
 
-    scene;
+    activeScene;
+
+    blankScene;
 
     previousTime = 0;
 
@@ -60,11 +63,21 @@ class Game {
 
     bulletFiring;
 
+    enemySpawnFiring;
+
     bgManager;
 
     runTime = 0;
 
     enemyManager;
+
+    gameState;
+
+    static GameReady = 1;
+
+    static GameActive = 2;
+
+    static GameOver = 3;
 
     update(deltaTimeActual) {
         if (resizeRendererToDisplaySize(this.renderer)) {
@@ -94,12 +107,25 @@ class Game {
             this.loadModel(gltf, Game.BG_TYPE);
         }
 
+        if (this.enemySpawnFiring.fire(this.runTime)) {
+            this.loadXModels("enemy-jet.glb", "enemy", EnemyManager.ENEMY_PER_WAVE, (models) => {
+                const objs = this.enemyManager.addEnemyChain(models);
+                for (const obj of objs) {
+                    this.activeScene.add(obj);
+                }
+            });
+        }
+
         const otherObjVelocity = useDeltaTime * 0.0005;
 
         this.bgManager.update(otherObjVelocity);
 
         const enemyObjVelocity = otherObjVelocity / 3;
         this.enemyManager.update(enemyObjVelocity);
+
+        if (this.enemyManager.checkPlaneCollision(this.player.getPosition(), 0.3)) {
+
+        }
 
         this.runTime += useDeltaTime;
     }
@@ -112,7 +138,15 @@ class Game {
      * main render loop of our thing
      */
     render(_time) {
-        this.renderer.render(this.scene, this.camera);
+        if (this.gameState === Game.GameActive) {
+            this.renderer.render(this.activeScene, this.camera);
+        } else {
+            this.renderer.render(this.blankScene, this.camera);
+        }
+    }
+
+    displayGameReadyText() {
+
     }
 
     /**
@@ -126,7 +160,7 @@ class Game {
 
         loader.load(path, (gltf) => {
             const model = gltf.scene;
-            this.scene.add(model);
+            this.activeScene.add(model);
             model.scale.setScalar(SCALE);
 
             if (type === Game.BULLET_TYPE) {
@@ -158,15 +192,38 @@ class Game {
         this.pressedKeys[event.keyCode] = false;
     }
 
+    static toggleGameReadyText() {
+        document.querySelector(".gameready")
+            .classList
+            .toggle("hide");
+    }
+
+    static toggleGameOverText() {
+        document.querySelector(".gamelose")
+            .classList
+            .toggle("hide");
+    }
+
     gameLoop() {
-        const currTime = Date.now(),
-            deltaTime = currTime - this.previousTime;
+        if (this.gameState === Game.GameActive) {
+            const currTime = Date.now(),
+                deltaTime = currTime - this.previousTime;
 
-        this.update(deltaTime);
-        this.processInput(deltaTime);
+            this.update(deltaTime);
+            this.processInput(deltaTime);
+
+            this.previousTime = currTime;
+        } else if (isPressed(this.pressedKeys, " ")) {
+            if (this.gameState === Game.GameReady) {
+                Game.toggleGameReadyText();
+                this.gameState = Game.GameActive;
+            } else {
+                Game.toggleGameOverText();
+                this.gameState = Game.GameReady;
+            }
+        }
+
         this.render();
-
-        this.previousTime = currTime;
 
         requestAnimationFrame(this.gameLoop.bind(this));
     }
@@ -190,28 +247,17 @@ class Game {
             mesh = new THREE.Mesh(planeGeo, planeMat);
         // mesh.rotation.x = Math.PI * -0.5;
         mesh.position.z = -0.855;
-        this.scene.add(mesh);
+        this.activeScene.add(mesh);
     }
 
     /**
      *
      * @param name {String}
      * @param type {String}
-     * @param count {Integer}
+     * @param count {Number}
      * @param callback {Function}
      */
     loadXModels(name, type, count, callback) {
-        // if (count <= 0) {
-        //     callback([]);
-        // }
-        //
-        // this.loadModel(name, type, (model) => {
-        //     this.loadXModels(name, type, count - 1, (models) => {
-        //         models.push(model);
-        //         callback(models);
-        //     });
-        // });
-
         const models = [];
         for (let i = 0; i < count; i++) {
             this.loadModel(name, type, (model) => {
@@ -230,13 +276,17 @@ class Game {
             .fill(false);
         this.runTime = Date.now();
 
-        this.scene.background = new THREE.Color(0x00AAAA);
+        this.activeScene.background = new THREE.Color(0x00AAAA);
+        this.blankScene.background = new THREE.Color(0x00AAAA);
 
         this.backgroundFiring = new BackgroundFiring(Background.INTERVAL);
         this.bulletFiring = new BackgroundFiring(Airplane.BULLET_INTERVAL);
+        this.enemySpawnFiring = new BackgroundFiring(EnemyManager.SPAWN_INTERVAL);
 
         this.bgManager = new Background();
         this.enemyManager = new EnemyManager();
+
+        Game.toggleGameReadyText();
 
         this.loadModel("airplane.glb", "player", (model) => {
             this.player = new Airplane(model);
@@ -246,12 +296,8 @@ class Game {
         this.addPlaneToScene();
 
         // TODO: actually randomly spawn enemies
-        this.loadXModels("enemy-jet.glb", "enemy", EnemyManager.ENEMY_PER_WAVE, (models) => {
-            const objs = this.enemyManager.addEnemyChain(models);
-            for (const obj of objs) {
-                this.scene.add(obj);
-            }
-        });
+
+        this.gameState = Game.GameReady;
     }
 
     constructor(canvasId) {
@@ -263,7 +309,9 @@ class Game {
         this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas });
         this.renderer.shadowMap.enabled = true;
 
-        this.scene = new THREE.Scene();
+        this.activeScene = new THREE.Scene();
+
+        this.blankScene = new THREE.Scene();
 
         {
             const fov = 45,
@@ -285,7 +333,7 @@ class Game {
 
             // need to set light shadow bias and all?
 
-            this.scene.add(shadowLight);
+            this.activeScene.add(shadowLight);
         }
     }
 }

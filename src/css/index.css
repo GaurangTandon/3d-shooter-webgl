@@ -10,3 +10,13 @@ html, body {
     outline: none;
     margin: 0 auto;
 }
+
+.hide {
+    display: none;
+}
+
+.overlay {
+    position: fixed;
+    top: 30%;
+    left: 30%;
+}

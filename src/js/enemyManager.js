@@ -1,8 +1,8 @@
 import {
-    EllipseCurve, BufferGeometry, Line, LineBasicMaterial, Vector3,
+    EllipseCurve, BufferGeometry, Line, LineBasicMaterial, Vector3, LineCurve,
 } from "../build/three.module.js";
 import { GameObject } from "./gameobject.js";
-import { PLAYER_Z } from "./utils.js";
+import { PLAYER_Z, randomChoose } from "./utils.js";
 
 class CurveObject extends GameObject {
     lengthTraversed;
@@ -27,9 +27,13 @@ class CurveObject extends GameObject {
         }
 
         if (this.lengthTraversed >= 1) {
-            this.model.position.x = 2;
-            this.model.position.y = 2;
-            this.model.position.z = 0;
+            // const carTarget = new Vector3();
+            // curve.getPointAt(1, carTarget);
+            // carTarget.applyMatrix4(curveObject.matrixWorld);
+
+            this.model.position.x = 3;
+            this.model.position.y = 3;
+            this.model.position.z = 2;
             this.over = true;
             return false;
         }
@@ -75,15 +79,29 @@ class EnemyWave {
 
     cycleComplete;
 
+    static circleCenters = [
+        [0.8, 0.8],
+        [-0.8, 0.9],
+    ];
+
+    static lineCenters = [
+        [0.5, 0.6],
+        [-0.5, -0.6],
+    ];
+
     constructor(curveType, enemyObjects) {
+        // docs: https://threejs.org/docs/#api/en/extras/curves/EllipseCurve
         if (curveType === "circle") {
-            // docs: https://threejs.org/docs/#api/en/extras/curves/EllipseCurve
-            this.curve = new EllipseCurve(0.8, 0.8, 1, 1, 0, 2 * Math.PI, false, 0);
+            const [x, y] = randomChoose(EnemyWave.circleCenters);
+
+            this.curve = new EllipseCurve(x, y, 1, 1, 0, 2 * Math.PI, false, 0);
         } else if (curveType === "ellipse") {
-            this.curve = new EllipseCurve(0, 0, 1, 1, 0, 2 * Math.PI, false, 0);
+            this.curve = new EllipseCurve(0, 0.8, 0.7, 1.2, 0, 2 * Math.PI, false, 0);
         } else if (curveType === "vline") {
+            const [x1, x2] = randomChoose(EnemyWave.lineCenters);
+
             // goes straight down from up
-            this.curve = new EllipseCurve(0, 0, 1, 1, 0, 2 * Math.PI, false, 0);
+            this.curve = new LineCurve(new Vector3(x1, 2), new Vector3(x2, -1.1));
         } else {
             console.error("Unknown enemy movement");
             return;
@@ -103,8 +121,6 @@ class EnemyWave {
             this.enemies.push(enemy);
         }
 
-        // TODO: set start position of each fighter jet to outside the view
-
         this.curveObject = curveObject;
         this.cycleComplete = false;
     }
@@ -117,10 +133,18 @@ class EnemyWave {
             }
             if (allOver) {
                 this.cycleComplete = true;
+                this.curveObject.position.x = -10;
             }
         }
+    }
 
-        return !this.cycleComplete;
+    checkPlaneCollision(position, threshold) {
+        for (const enemy of this.enemies) {
+            if (enemy.colliding(position, threshold)) {
+                // TODO: game over
+                console.log("HIT");
+            }
+        }
     }
 }
 
@@ -129,12 +153,15 @@ class EnemyManager {
 
     static ENEMY_PER_WAVE = 5;
 
+    static SPAWN_INTERVAL = 10000;
+
     constructor() {
         this.enemyGroups = [];
     }
 
     addEnemyChain(enemyObjects) {
-        const cycle = new EnemyWave("circle", enemyObjects),
+        const type = Math.random() < 0.35 ? "circle" : Math.random() < 0.7 ? "ellipse" : "vline",
+            cycle = new EnemyWave(type, enemyObjects),
             objs = [cycle.curveObject];
 
         for (const enemy of cycle.enemies) {
@@ -150,6 +177,10 @@ class EnemyManager {
         for (const cycle of this.enemyGroups) {
             cycle.update(velocity);
         }
+    }
+
+    checkPlaneCollision(position, threshold) {
+        return this.enemyGroups.some((cycle) => cycle.checkPlaneCollision(position, threshold));
     }
 }
 

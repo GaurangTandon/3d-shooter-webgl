@@ -33,6 +33,14 @@ class GameObject {
         const pos = this.model.position;
         return !(outside(pos.x, displacement.x) || outside(pos.y, displacement.y));
     }
+
+    colliding(other, threshold) {
+        return this.model.position.distanceTo(other) <= threshold;
+    }
+
+    getPosition() {
+        return this.model.position.clone();
+    }
 }
 
 export { GameObject };
