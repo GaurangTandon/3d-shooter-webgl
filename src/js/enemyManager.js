@@ -47,11 +47,16 @@ class CurveObject extends GameObject {
         // put the car between the 2 points
         this.model.position.lerpVectors(carPosition, carTarget, 0.5);
 
-        for (let i = 0; i < 2; i++) {
-            const wing = this.model.children[i];
-            wing.rotation.y = runTime * 2;
-        }
+        // Option A
+        this.model.rotation.z = runTime * 4;
+        this.model.rotation.x = Math.PI / 8;
 
+        // // Option B
+        // for (let i = 0; i < 2; i++) {
+        //     const wing = this.model.children[i];
+        //     wing.rotation.y = runTime * 2;
+        // }
+        //
         this.lengthTraversed += lengthAdd;
 
         return true;
@@ -118,6 +123,7 @@ class EnemyWave {
         this.enemies = [];
         for (let i = 0; i < EnemyManager.ENEMY_PER_WAVE; i++) {
             const gltf = enemyObjects[i];
+            console.log(gltf);
 
             this.resources.track(gltf);
 

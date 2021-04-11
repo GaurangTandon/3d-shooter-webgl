@@ -324,6 +324,12 @@ class Game {
             mesh = new THREE.Mesh(planeGeo, planeMat);
         // mesh.rotation.x = Math.PI * -0.5;
         mesh.position.z = -0.855;
+
+        if (mesh.castShadow !== undefined) {
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+        }
+
         this.activeScene.add(mesh);
     }
 
@@ -405,12 +411,12 @@ class Game {
             // this.activeScene.add(shadowLight);
             // this.activeScene.add(shadowLight.target);
 
-            const hemisphereLight = new THREE.HemisphereLight(0xaaaaaa, 0x001234, 0.99),
-                ambientLight = new THREE.AmbientLight(0xdc8874, 0.5),
-                shadowLight = new THREE.DirectionalLight(0xffffff, 0.9);
+            const hemisphereLight = new THREE.HemisphereLight(0xaaaaaa, 0x000000, 0.9),
 
-            // hemisphereLight.position.set(-0.5, 0, 30);
-            shadowLight.position.set(-0.5, 0, 3);
+                ambientLight = new THREE.AmbientLight(0xdc8874, 0.5),
+
+                shadowLight = new THREE.DirectionalLight(0xffffff, 0.9);
+            shadowLight.position.set(150, 350, 350);
             shadowLight.castShadow = true;
             shadowLight.shadow.camera.left = -400;
             shadowLight.shadow.camera.right = 400;
@@ -423,7 +429,7 @@ class Game {
 
             this.activeScene.add(hemisphereLight);
             this.activeScene.add(shadowLight);
-            // this.activeScene.add(ambientLight);
+            this.activeScene.add(ambientLight);
         }
     }
 }

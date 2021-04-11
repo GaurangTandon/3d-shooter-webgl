@@ -30,7 +30,7 @@ class Background {
     }
 
     static randomGLTF() {
-        return Math.random() < 0.5 ? Lighthouse.GLTF : Mountain.GLTF;
+        return "lighthouse.glb";
     }
 
     addBg(model) {
@@ -49,12 +49,4 @@ class Background {
     }
 }
 
-class Lighthouse extends Background {
-    static GLTF = "lighthouse.glb";
-}
-
-class Mountain extends Background {
-    static GLTF = "mountain.glb";
-}
-
-export { Background, Mountain, Lighthouse };
+export { Background };
