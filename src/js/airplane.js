@@ -91,6 +91,10 @@ class Airplane extends GameObject {
             bullet.displace(new Vector3(0, velocity, 0));
         });
     }
+
+    hitCoin() {
+        this.score += 10;
+    }
 }
 
 export { Airplane };

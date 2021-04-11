@@ -6,6 +6,7 @@ import { BackgroundFiring } from "./interval.js";
 import { Background } from "./background.js";
 import { EnemyManager } from "./enemyManager.js";
 import { isPressed } from "./utils.js";
+import { Coins } from "./coins.js";
 
 // Game is taking place in XY plane
 // Camera is along origin in Z axis
@@ -61,11 +62,15 @@ class Game {
 
     static ENEMY_TYPE = "enemy";
 
+    static COIN_TYPE = "coin";
+
     backgroundFiring;
 
     bulletFiring;
 
     enemySpawnFiring;
+
+    coinFiring;
 
     bgManager;
 
@@ -75,6 +80,8 @@ class Game {
 
     enemyManager;
 
+    coinManager;
+
     gameState;
 
     static GameReady = 1;
@@ -82,6 +89,10 @@ class Game {
     static GameActive = 2;
 
     static GameOver = 3;
+
+    elapsedSeconds() {
+        return (this.runTime - this.startTime) / 1000;
+    }
 
     update(deltaTimeActual) {
         if (resizeRendererToDisplaySize(this.renderer)) {
@@ -120,6 +131,10 @@ class Game {
             });
         }
 
+        if (this.coinFiring.fire(this.runTime)) {
+            this.loadModel(Coins.GLTF, Game.COIN_TYPE);
+        }
+
         const otherObjVelocity = useDeltaTime * 0.0005;
 
         this.bgManager.update(otherObjVelocity);
@@ -137,9 +152,15 @@ class Game {
             }
         }
 
+        if (this.coinManager.checkCollision(this.player.getPosition(), 0.2)) {
+            this.player.hitCoin();
+        }
+
+        this.coinManager.update(enemyObjVelocity, this.elapsedSeconds());
+
         this.runTime += useDeltaTime;
 
-        document.querySelector(".runtime").innerHTML = Math.floor((this.runTime - this.startTime) / 1000)
+        document.querySelector(".runtime").innerHTML = Math.floor(this.elapsedSeconds())
             .toString();
         document.querySelector(".health").innerHTML = this.player.health.toString();
         document.querySelector(".score").innerHTML = this.player.score.toString();
@@ -180,6 +201,10 @@ class Game {
 
             if (type === Game.BG_TYPE) {
                 this.bgManager.addBg(model);
+            }
+
+            if (type === Game.COIN_TYPE) {
+                this.coinManager.addCoin(model);
             }
 
             if (type === Game.ENEMY_TYPE) {
@@ -304,9 +329,11 @@ class Game {
         this.backgroundFiring = new BackgroundFiring(Background.INTERVAL);
         this.bulletFiring = new BackgroundFiring(Airplane.BULLET_INTERVAL);
         this.enemySpawnFiring = new BackgroundFiring(EnemyManager.SPAWN_INTERVAL);
+        this.coinFiring = new BackgroundFiring(Coins.INTERVAL);
 
         this.bgManager = new Background();
         this.enemyManager = new EnemyManager();
+        this.coinManager = new Coins();
 
         Game.toggleGameReadyText();
 
