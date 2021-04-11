@@ -5,7 +5,7 @@ import { isPressed, PLAYER_Z } from "./utils.js";
 class Airplane extends GameObject {
     bullets;
 
-    static BULLET_INTERVAL = 1000;
+    static BULLET_INTERVAL = 500;
 
     static BULLET_GLTF = "bullet.glb";
 
@@ -77,6 +77,7 @@ class Airplane extends GameObject {
         bulletObj.position.x = this.model.position.x;
         bulletObj.position.y = this.model.position.y;
         bulletObj.position.z = this.model.position.z;
+        bulletObj.scale.divideScalar(2);
         this.bullets.push(new GameObject(bulletObj));
     }
 
@@ -84,18 +85,11 @@ class Airplane extends GameObject {
         // if any bullet is out of frame, delete it from list
         // otherwise add fixed displacement
 
+        velocity *= 1.5;
+        this.bullets = this.bullets.filter((bullet) => !bullet.over && !bullet.outOfFrame());
         this.bullets.forEach((bullet) => {
             bullet.displace(new Vector3(0, velocity, 0));
         });
-
-        let i = 0;
-        while (i < this.bullets.len && this.bullets[i].outOfFrame()) {
-            i++;
-        }
-
-        if (i > 0) {
-            this.bullets = this.bullets.slice(i);
-        }
     }
 }
 

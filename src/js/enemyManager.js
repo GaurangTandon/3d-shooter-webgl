@@ -3,11 +3,10 @@ import {
 } from "../build/three.module.js";
 import { GameObject } from "./gameobject.js";
 import { PLAYER_Z, randomChoose } from "./utils.js";
+import { ResourceTracker } from "./resource.js";
 
 class CurveObject extends GameObject {
     lengthTraversed;
-
-    over;
 
     constructor(model) {
         super(model);
@@ -28,10 +27,7 @@ class CurveObject extends GameObject {
         }
 
         if (this.lengthTraversed >= 1) {
-            this.model.position.x = 3;
-            this.model.position.y = 3;
-            this.model.position.z = 2;
-            this.over = true;
+            this.kick();
             return false;
         }
 
@@ -71,6 +67,8 @@ class EnemyWave {
 
     cycleComplete;
 
+    resources;
+
     static circleCenters = [
         [0.8, 1],
         [-0.8, 1],
@@ -82,6 +80,8 @@ class EnemyWave {
     ];
 
     constructor(curveType, enemyObjects) {
+        this.resources = new ResourceTracker();
+
         // docs: https://threejs.org/docs/#api/en/extras/curves/EllipseCurve
         if (curveType === "circle") {
             const [x, y] = randomChoose(EnemyWave.circleCenters);
@@ -101,20 +101,28 @@ class EnemyWave {
 
         const points = this.curve.getPoints(50),
             geometry = new BufferGeometry().setFromPoints(points),
-            material = new LineBasicMaterial({ color: 0xff0000 }),
+            material = new LineBasicMaterial({
+                color: 0xff0000,
+                transparent: true,
+                opacity: 0,
+            }),
             curveObject = new Line(geometry, material);
 
         curveObject.position.z = PLAYER_Z;
 
         this.enemies = [];
         for (let i = 0; i < EnemyManager.ENEMY_PER_WAVE; i++) {
-            const enemy = new CurveObject(enemyObjects[i]);
+            const gltf = enemyObjects[i];
+            this.resources.track(gltf);
+
+            const enemy = new CurveObject(gltf);
             enemy.lengthTraversed = i * 0.08;
-            console.log(enemy.model.children);
             this.enemies.push(enemy);
         }
 
         this.curveObject = curveObject;
+        this.resources.track(this.curveObject);
+
         this.cycleComplete = false;
     }
 
@@ -124,9 +132,10 @@ class EnemyWave {
             for (const enemy of this.enemies) {
                 allOver = !enemy.update(this.curve, this.curveObject, velocity) && allOver;
             }
+
             if (allOver) {
                 this.cycleComplete = true;
-                this.curveObject.position.x = -10;
+                this.resources.dispose();
             }
         }
     }
@@ -138,6 +147,18 @@ class EnemyWave {
                 console.log("HIT");
             }
         }
+    }
+
+    checkBulletCollision(position, threshold) {
+        for (const enemy of this.enemies) {
+            if (enemy.colliding(position, threshold)) {
+                enemy.kick();
+                this.resources.dispose(enemy.getUuid());
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 
@@ -155,7 +176,7 @@ class EnemyManager {
     addEnemyChain(enemyObjects) {
         const type = Math.random() < 0.35 ? "circle" : Math.random() < 0.7 ? "ellipse" : "vline",
             cycle = new EnemyWave(type, enemyObjects),
-            objs = []; // this.curveObject
+            objs = [cycle.curveObject]; // cycle.curveObject
 
         for (const enemy of cycle.enemies) {
             objs.push(enemy.model);
@@ -174,6 +195,10 @@ class EnemyManager {
 
     checkPlaneCollision(position, threshold) {
         return this.enemyGroups.some((cycle) => cycle.checkPlaneCollision(position, threshold));
+    }
+
+    checkBulletCollision(position, threshold) {
+        return this.enemyGroups.some((cycle) => cycle.checkBulletCollision(position, threshold));
     }
 }
 

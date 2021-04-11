@@ -1,8 +1,11 @@
 class GameObject {
     model;
 
+    over;
+
     constructor(model) {
         this.model = model;
+        this.over = false;
     }
 
     displace(displacement) {
@@ -10,7 +13,7 @@ class GameObject {
     }
 
     outOfFrame() {
-        return false;
+        return Math.abs(this.model.position.x) > 1 || Math.abs(this.model.position.y) > 1;
     }
 
     rotateNone() {
@@ -40,6 +43,16 @@ class GameObject {
 
     getPosition() {
         return this.model.position.clone();
+    }
+
+    kick() {
+        this.model.position.x = 3;
+        this.model.position.y = 3;
+        this.model.position.z = 2;
+    }
+
+    getUuid() {
+        return this.model.uuid;
     }
 }
 

@@ -131,6 +131,12 @@ class Game {
 
         }
 
+        for (const bullet of this.player.bullets) {
+            if (this.enemyManager.checkBulletCollision(bullet.getPosition(), 0.1)) {
+                bullet.kick();
+            }
+        }
+
         this.runTime += useDeltaTime;
 
         document.querySelector(".runtime").innerHTML = Math.floor((this.runTime - this.startTime) / 1000)
@@ -152,10 +158,6 @@ class Game {
         } else {
             this.renderer.render(this.blankScene, this.camera);
         }
-    }
-
-    displayGameReadyText() {
-
     }
 
     /**
@@ -309,6 +311,7 @@ class Game {
         Game.toggleGameReadyText();
 
         this.loadModel("airplane.glb", "player", (model) => {
+            console.log(model);
             this.player = new Airplane(model);
             requestAnimationFrame(this.gameLoop.bind(this));
         });
