@@ -11,6 +11,10 @@ class Airplane extends GameObject {
 
     currentlyPressed;
 
+    score;
+
+    health;
+
     static delta = {
         S: [new Vector3(0, -1, 0), undefined],
         A: [new Vector3(-1, 0, 0), new Vector3(0, -0.5, 0)],
@@ -25,6 +29,8 @@ class Airplane extends GameObject {
         model.position.y = -0.8;
         this.bullets = [];
         this.currentlyPressed = false;
+        this.score = 0;
+        this.health = 100;
     }
 
     static anyMotionKeyPressed(keys) {

@@ -20,3 +20,9 @@ html, body {
     top: 30%;
     left: 30%;
 }
+
+.score-container {
+    position: fixed;
+    left: 3%;
+    top: 5%;
+}

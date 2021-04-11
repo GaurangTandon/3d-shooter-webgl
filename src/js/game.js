@@ -59,6 +59,8 @@ class Game {
 
     static BG_TYPE = "background";
 
+    static ENEMY_TYPE = "enemy";
+
     backgroundFiring;
 
     bulletFiring;
@@ -67,7 +69,9 @@ class Game {
 
     bgManager;
 
-    runTime = 0;
+    runTime;
+
+    startTime;
 
     enemyManager;
 
@@ -108,7 +112,7 @@ class Game {
         }
 
         if (this.enemySpawnFiring.fire(this.runTime)) {
-            this.loadXModels("enemy-jet.glb", "enemy", EnemyManager.ENEMY_PER_WAVE, (models) => {
+            this.loadXModels("enemy-jet.glb", Game.ENEMY_TYPE, EnemyManager.ENEMY_PER_WAVE, (models) => {
                 const objs = this.enemyManager.addEnemyChain(models);
                 for (const obj of objs) {
                     this.activeScene.add(obj);
@@ -128,6 +132,11 @@ class Game {
         }
 
         this.runTime += useDeltaTime;
+
+        document.querySelector(".runtime").innerHTML = Math.floor((this.runTime - this.startTime) / 1000)
+            .toString();
+        document.querySelector(".health").innerHTML = this.player.health.toString();
+        document.querySelector(".score").innerHTML = this.player.score.toString();
     }
 
     processInput(deltaTime) {
@@ -171,6 +180,10 @@ class Game {
                 this.bgManager.addBg(model);
             }
 
+            if (type === Game.ENEMY_TYPE) {
+                model.scale.setScalar(SCALE / 10);
+            }
+
             model.traverse((obj) => {
                 if (obj.castShadow !== undefined) {
                     obj.castShadow = true;
@@ -204,6 +217,12 @@ class Game {
             .toggle("hide");
     }
 
+    static toggleGameHUD() {
+        document.querySelector(".score-container")
+            .classList
+            .toggle("hide");
+    }
+
     gameLoop() {
         if (this.gameState === Game.GameActive) {
             const currTime = Date.now(),
@@ -216,6 +235,7 @@ class Game {
         } else if (isPressed(this.pressedKeys, " ")) {
             if (this.gameState === Game.GameReady) {
                 Game.toggleGameReadyText();
+                Game.toggleGameHUD();
                 this.gameState = Game.GameActive;
             } else {
                 Game.toggleGameOverText();
@@ -274,7 +294,7 @@ class Game {
         this.previousTime = Date.now();
         this.pressedKeys = Array(256)
             .fill(false);
-        this.runTime = Date.now();
+        this.runTime = this.startTime = Date.now();
 
         this.activeScene.background = new THREE.Color(0x00AAAA);
         this.blankScene.background = new THREE.Color(0x00AAAA);
@@ -294,8 +314,6 @@ class Game {
         });
 
         this.addPlaneToScene();
-
-        // TODO: actually randomly spawn enemies
 
         this.gameState = Game.GameReady;
     }
@@ -326,14 +344,33 @@ class Game {
         }
 
         {
-            const shadowLight = new THREE.DirectionalLight(0xffffff, 1);
+            // const shadowLight = new THREE.DirectionalLight(0xffffff, 2);
+            //
+            // shadowLight.position.set(-0.5, 0, 3);
+            // shadowLight.castShadow = true;
+            //
+            // this.activeScene.add(shadowLight);
+            // this.activeScene.add(shadowLight.target);
 
-            shadowLight.position.set(-0.5, 0, 2);
+            const hemisphereLight = new THREE.HemisphereLight(0xaaaaaa, 0x001234, 0.99),
+                ambientLight = new THREE.AmbientLight(0xdc8874, 0.5),
+                shadowLight = new THREE.DirectionalLight(0xffffff, 0.9);
+
+            // hemisphereLight.position.set(-0.5, 0, 30);
+            shadowLight.position.set(-0.5, 0, 3);
             shadowLight.castShadow = true;
+            shadowLight.shadow.camera.left = -400;
+            shadowLight.shadow.camera.right = 400;
+            shadowLight.shadow.camera.top = 400;
+            shadowLight.shadow.camera.bottom = -400;
+            shadowLight.shadow.camera.near = 1;
+            shadowLight.shadow.camera.far = 1000;
+            shadowLight.shadow.mapSize.width = 4096;
+            shadowLight.shadow.mapSize.height = 4096;
 
-            // need to set light shadow bias and all?
-
+            this.activeScene.add(hemisphereLight);
             this.activeScene.add(shadowLight);
+            // this.activeScene.add(ambientLight);
         }
     }
 }

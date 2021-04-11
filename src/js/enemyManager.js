@@ -19,6 +19,7 @@ class CurveObject extends GameObject {
     /**
      *
      * @param curve {Curve}
+     * @param curveObject {BufferGeometr}
      * @param lengthAdd {Float}
      */
     update(curve, curveObject, lengthAdd) {
@@ -27,10 +28,6 @@ class CurveObject extends GameObject {
         }
 
         if (this.lengthTraversed >= 1) {
-            // const carTarget = new Vector3();
-            // curve.getPointAt(1, carTarget);
-            // carTarget.applyMatrix4(curveObject.matrixWorld);
-
             this.model.position.x = 3;
             this.model.position.y = 3;
             this.model.position.z = 2;
@@ -51,18 +48,13 @@ class CurveObject extends GameObject {
         // put the car at the first point (temporarily)
         this.model.position.copy(carPosition);
 
-        // const dirn = carTarget.clone()
-        //         .sub(carPosition)
-        //         .normalize(),
-        //     dirnVec = carPosition.clone()
-        //         .add(dirn.multiplyScalar(20));
-
-        // point the car the second point
-        // TODO: fix models in blender so that they look the correct way
-        this.model.lookAt(carTarget);
-
         // put the car between the 2 points
         this.model.position.lerpVectors(carPosition, carTarget, 0.5);
+
+        for (let i = 0; i < 2; i++) {
+            const wing = this.model.children[i];
+            wing.rotation.y += lengthAdd * 5;
+        }
 
         this.lengthTraversed += lengthAdd;
 
@@ -80,8 +72,8 @@ class EnemyWave {
     cycleComplete;
 
     static circleCenters = [
-        [0.8, 0.8],
-        [-0.8, 0.9],
+        [0.8, 1],
+        [-0.8, 1],
     ];
 
     static lineCenters = [
@@ -118,6 +110,7 @@ class EnemyWave {
         for (let i = 0; i < EnemyManager.ENEMY_PER_WAVE; i++) {
             const enemy = new CurveObject(enemyObjects[i]);
             enemy.lengthTraversed = i * 0.08;
+            console.log(enemy.model.children);
             this.enemies.push(enemy);
         }
 
@@ -162,7 +155,7 @@ class EnemyManager {
     addEnemyChain(enemyObjects) {
         const type = Math.random() < 0.35 ? "circle" : Math.random() < 0.7 ? "ellipse" : "vline",
             cycle = new EnemyWave(type, enemyObjects),
-            objs = [cycle.curveObject];
+            objs = []; // this.curveObject
 
         for (const enemy of cycle.enemies) {
             objs.push(enemy.model);
