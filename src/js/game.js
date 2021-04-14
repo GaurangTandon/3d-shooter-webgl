@@ -7,6 +7,8 @@ import { EnemyManager } from "./enemyManager.js";
 import { isPressed } from "./utils.js";
 import { Coins } from "./coins.js";
 import { GameObject } from "./gameobject.js";
+import { Water } from "./jsm/objects/Water.js";
+import { OrbitControls } from "./jsm/controls/OrbitControls.js";
 
 // Game is taking place in XY plane
 // Camera is along origin in Z axis
@@ -115,6 +117,10 @@ class Game {
         if (resizeRendererToDisplaySize(this.renderer)) {
             this.camera.aspect = this.canvas.clientWidth / this.canvas.clientHeight;
             this.camera.updateProjectionMatrix();
+        }
+
+        if (this.waterMesh) {
+            this.waterMesh.material.uniforms.time.value += 1.0 / 60.0;
         }
 
         let useDeltaTime;
@@ -354,31 +360,31 @@ class Game {
     }
 
     addPlaneToScene() {
-        const planeSize = 7,
-            loader = new THREE.TextureLoader(),
-            texture = loader.load("../../assets/images/water.jpg");
+        const waterGeometry = new THREE.PlaneGeometry(7, 7);
+        this.waterMesh = new Water(
+            waterGeometry,
+            {
+                textureWidth: 512,
+                textureHeight: 512,
+                waterNormals: new THREE.TextureLoader().load("../../assets/images/waternormals.jpg", function (texture) {
+                    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+                }),
+                sunDirection: new THREE.Vector3(),
+                sunColor: 0xffffff,
+                waterColor: 0x111e0f,
+                distortionScale: 0.5,
+            },
+        );
 
-        texture.wrapS = THREE.RepeatWrapping;
-        texture.wrapT = THREE.RepeatWrapping;
-        texture.magFilter = THREE.NearestFilter;
-        const repeats = 1; // planeSize / 2;
-        texture.repeat.set(repeats, repeats);
+        // this.waterMesh.rotation.x = -Math.PI / 2;
+        this.waterMesh.position.z = -0.855;
 
-        const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize),
-            planeMat = new THREE.MeshPhongMaterial({
-                map: texture,
-                side: THREE.DoubleSide,
-            }),
-            mesh = new THREE.Mesh(planeGeo, planeMat);
-        // mesh.rotation.x = Math.PI * -0.5;
-        mesh.position.z = -0.855;
-
-        if (mesh.castShadow !== undefined) {
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
+        if (this.waterMesh.castShadow !== undefined) {
+            this.waterMesh.castShadow = true;
+            this.waterMesh.receiveShadow = true;
         }
 
-        this.activeScene.add(mesh);
+        this.activeScene.add(this.waterMesh);
     }
 
     /**
@@ -451,6 +457,10 @@ class Game {
             this.camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
             this.camera.position.set(0, -1, 3);
             this.camera.rotation.x = Math.PI / 8;
+
+            const controls = new OrbitControls(this.camera, this.canvas);
+            controls.target.set(0, 0, 0);
+            controls.update();
         }
 
         {
