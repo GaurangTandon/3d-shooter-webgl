@@ -122,12 +122,11 @@ class EnemyWave {
 
         this.enemies = [];
         for (let i = 0; i < EnemyManager.ENEMY_PER_WAVE; i++) {
-            const gltf = enemyObjects[i];
-            console.log(gltf);
+            const gltfModel = enemyObjects[i];
 
-            this.resources.track(gltf);
+            this.resources.track(gltfModel);
 
-            const enemy = new CurveObject(gltf);
+            const enemy = new CurveObject(gltfModel);
             enemy.lengthTraversed = i * 0.08;
             this.enemies.push(enemy);
         }

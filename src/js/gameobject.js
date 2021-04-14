@@ -13,7 +13,7 @@ class GameObject {
     }
 
     outOfFrame() {
-        return Math.abs(this.model.position.x) > 1 || Math.abs(this.model.position.y) > 1;
+        return Math.abs(this.model.position.x) > 1.2 || Math.abs(this.model.position.y) > 1.2;
     }
 
     rotateNone() {
@@ -30,7 +30,7 @@ class GameObject {
     checkDisplacementValid(displacement) {
         function outside(x, dx) {
             x += dx;
-            return x < -0.9 || x > 0.98;
+            return x < -0.9 || x > 0.8;
         }
 
         const pos = this.model.position;

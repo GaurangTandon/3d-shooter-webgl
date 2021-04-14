@@ -306,7 +306,7 @@ class Game {
     }
 
     addPlaneToScene() {
-        const planeSize = 5,
+        const planeSize = 7,
             loader = new THREE.TextureLoader(),
             texture = loader.load("../../assets/images/water.jpg");
 
@@ -396,38 +396,17 @@ class Game {
                 near = 0.1,
                 far = 100;
             this.camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-            this.camera.position.set(0, 0, 3);
-            const controls = new OrbitControls(this.camera, this.canvas);
-            controls.target.set(0, 0, 0);
-            controls.update();
+            this.camera.position.set(0, -1, 3);
+            this.camera.rotation.x = Math.PI / 8;
         }
 
         {
-            // const shadowLight = new THREE.DirectionalLight(0xffffff, 2);
-            //
-            // shadowLight.position.set(-0.5, 0, 3);
-            // shadowLight.castShadow = true;
-            //
-            // this.activeScene.add(shadowLight);
-            // this.activeScene.add(shadowLight.target);
+            const shadowLight = new THREE.DirectionalLight(0xffffff, 1),
+                ambientLight = new THREE.AmbientLight(0xdc8874, 2);
 
-            const hemisphereLight = new THREE.HemisphereLight(0xaaaaaa, 0x000000, 0.9),
-
-                ambientLight = new THREE.AmbientLight(0xdc8874, 0.5),
-
-                shadowLight = new THREE.DirectionalLight(0xffffff, 0.9);
-            shadowLight.position.set(150, 350, 350);
+            shadowLight.position.set(-0.5, 0, 3);
             shadowLight.castShadow = true;
-            shadowLight.shadow.camera.left = -400;
-            shadowLight.shadow.camera.right = 400;
-            shadowLight.shadow.camera.top = 400;
-            shadowLight.shadow.camera.bottom = -400;
-            shadowLight.shadow.camera.near = 1;
-            shadowLight.shadow.camera.far = 1000;
-            shadowLight.shadow.mapSize.width = 4096;
-            shadowLight.shadow.mapSize.height = 4096;
 
-            this.activeScene.add(hemisphereLight);
             this.activeScene.add(shadowLight);
             this.activeScene.add(ambientLight);
         }

@@ -35,8 +35,8 @@ class Background {
 
     addBg(model) {
         model.position.z = -0.555;
-        model.position.y = 2;
-        model.position.x = -1 + Math.random() * 2;
+        model.position.y = 3;
+        model.position.x = -2 + Math.random() * 4;
         model.scale.setScalar(model.scale.x * 3);
 
         this.tracker.track(model);
