@@ -30,7 +30,7 @@ class Background {
     }
 
     static randomGLTF() {
-        return "lighthouse.glb";
+        return "lighthouse.gltf";
     }
 
     addBg(model) {

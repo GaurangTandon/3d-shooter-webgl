@@ -10,7 +10,7 @@ class Coins {
 
     static INTERVAL = 1000;
 
-    static GLTF = "star.glb";
+    static GLTF = "star.gltf";
 
     constructor() {
         this.coins = [];

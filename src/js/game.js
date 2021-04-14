@@ -123,7 +123,7 @@ class Game {
         }
 
         if (this.enemySpawnFiring.fire(this.runTime)) {
-            this.loadXModels("enemy-jet.glb", Game.ENEMY_TYPE, EnemyManager.ENEMY_PER_WAVE, (models) => {
+            this.loadXModels("enemy-jet.gltf", Game.ENEMY_TYPE, EnemyManager.ENEMY_PER_WAVE, (models) => {
                 const objs = this.enemyManager.addEnemyChain(models);
                 for (const obj of objs) {
                     this.activeScene.add(obj);
@@ -366,7 +366,7 @@ class Game {
         this.enemyManager = new EnemyManager();
         this.coinManager = new Coins();
 
-        this.loadModel("airplane.glb", "player", (model) => {
+        this.loadModel("airplane.gltf", "player", (model) => {
             this.player = new Airplane(model);
             requestAnimationFrame(this.gameLoop.bind(this));
         });

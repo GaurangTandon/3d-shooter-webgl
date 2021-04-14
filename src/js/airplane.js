@@ -7,7 +7,7 @@ class Airplane extends GameObject {
 
     static BULLET_INTERVAL = 500;
 
-    static BULLET_GLTF = "bullet.glb";
+    static BULLET_GLTF = "bullet.gltf";
 
     currentlyPressed;
 
