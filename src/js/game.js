@@ -1,12 +1,12 @@
 import { GLTFLoader } from "./jsm/loaders/GLTFLoader.js";
 import * as THREE from "../build/three.module.js";
-import { OrbitControls } from "./jsm/controls/OrbitControls.js";
 import { Airplane } from "./airplane.js";
 import { BackgroundFiring } from "./interval.js";
 import { Background } from "./background.js";
 import { EnemyManager } from "./enemyManager.js";
 import { isPressed } from "./utils.js";
 import { Coins } from "./coins.js";
+import { GameObject } from "./gameobject.js";
 
 // Game is taking place in XY plane
 // Camera is along origin in Z axis
@@ -90,8 +90,25 @@ class Game {
 
     static GameOver = 3;
 
+    enemyBullets = [];
+
     elapsedSeconds() {
         return (this.runTime - this.startTime) / 1000;
+    }
+
+    loadMoreBullets(positionList) {
+        // const targetLength = this.enemyBullets.length + positionList.length;
+
+        for (const position of positionList) {
+            this.loadModel("enemy-bullet.gltf", "enemy-bullet",
+                ((positionArg) => (model) => {
+                    model.position.x = positionArg.x;
+                    model.position.y = positionArg.y;
+                    model.position.z = positionArg.z;
+                    model.rotation.x = Math.PI;
+                    this.enemyBullets.push(new GameObject(model));
+                })(position));
+        }
     }
 
     update(deltaTimeActual) {
@@ -107,15 +124,13 @@ class Game {
                 ? deltaTimeActual : slowMowDeltaTime;
         }
 
-        if (this.player) {
-            // move environment down by fixed speed
-            if (this.bulletFiring.fire(this.runTime)) {
-                this.loadModel(Airplane.BULLET_GLTF, Game.BULLET_TYPE);
-            }
-
-            const bulletVelocity = useDeltaTime * 0.001;
-            this.player.updateBullets(bulletVelocity);
+        // move environment down by fixed speed
+        if (this.bulletFiring.fire(this.runTime)) {
+            this.loadModel(Airplane.BULLET_GLTF, Game.BULLET_TYPE);
         }
+
+        const bulletVelocity = useDeltaTime * 0.001;
+        this.player.updateBullets(bulletVelocity);
 
         if (this.backgroundFiring.fire(this.runTime)) {
             const gltf = Background.randomGLTF();
@@ -139,10 +154,43 @@ class Game {
 
         this.bgManager.update(otherObjVelocity);
 
-        const enemyObjVelocity = otherObjVelocity / 3;
-        this.enemyManager.update(enemyObjVelocity, this.elapsedSeconds());
+        const enemyObjVelocity = otherObjVelocity / 3,
+            bulletsList = [];
+        this.enemyManager.update(enemyObjVelocity, this.elapsedSeconds(), bulletsList);
+        this.loadMoreBullets(bulletsList);
+
+        for (const bullet of this.enemyBullets) {
+            if (bullet.over) {
+                continue;
+            }
+
+            const displace = new THREE.Vector3(0, -5 * enemyObjVelocity, 0);
+            bullet.displace(displace);
+
+            if (this.player.colliding(bullet.model.position, 0.1)) {
+                this.player.hitBullet();
+                bullet.kick();
+            }
+
+            if (!bullet.over) {
+                for (const b2 of this.player.bullets) {
+                    if (b2.over) {
+                        continue;
+                    }
+
+                    if (b2.colliding(bullet.model.position, 0.05)) {
+                        b2.kick();
+                        bullet.kick();
+                    }
+                }
+            }
+        }
 
         if (this.enemyManager.checkPlaneCollision(this.player.getPosition(), 0.1)) {
+            this.player.health = 0;
+        }
+
+        if (this.player.health <= 0) {
             this.gameFiniss();
             return;
         }
@@ -354,6 +402,11 @@ class Game {
     }
 
     start() {
+        for (const blt of this.enemyBullets) {
+            blt.kick();
+        }
+        this.enemyBullets = [];
+
         this.activeScene.background = new THREE.Color(0x00AAAA);
         this.blankScene.background = new THREE.Color(0x00AAAA);
 

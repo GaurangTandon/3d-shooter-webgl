@@ -108,6 +108,10 @@ class Airplane extends GameObject {
     hitEnemy() {
         this.score += 20;
     }
+
+    hitBullet() {
+        this.health -= 10;
+    }
 }
 
 export { Airplane };

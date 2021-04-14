@@ -3,12 +3,18 @@ class BackgroundFiring {
 
     threshold;
 
-    constructor(threshold) {
+    random;
+
+    constructor(threshold, random = 0) {
         this.threshold = threshold;
+        this.random = random;
     }
 
     fire(curr) {
-        if (curr - this.lastFiring < this.threshold) {
+        const diff = curr - this.lastFiring,
+            gap = this.threshold - diff;
+
+        if (gap >= Math.random() * this.random) {
             return false;
         }
 

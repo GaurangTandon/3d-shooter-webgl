@@ -4,15 +4,19 @@ import {
 import { GameObject } from "./gameobject.js";
 import { PLAYER_Z, randomChoose } from "./utils.js";
 import { ResourceTracker } from "./resource.js";
+import { BackgroundFiring } from "./interval.js";
 
 class CurveObject extends GameObject {
     lengthTraversed;
+
+    bulletFiring;
 
     constructor(model) {
         super(model);
 
         this.lengthTraversed = 0;
         this.over = false;
+        this.bulletFiring = new BackgroundFiring(2000, 250);
     }
 
     /**
@@ -21,7 +25,7 @@ class CurveObject extends GameObject {
      * @param curveObject {BufferGeometr}
      * @param lengthAdd {Float}
      */
-    update(curve, curveObject, lengthAdd, runTime) {
+    update(curve, curveObject, lengthAdd, runTime, bullets) {
         if (this.over) {
             return false;
         }
@@ -47,17 +51,14 @@ class CurveObject extends GameObject {
         // put the car between the 2 points
         this.model.position.lerpVectors(carPosition, carTarget, 0.5);
 
-        // Option A
         this.model.rotation.z = runTime * 4;
         this.model.rotation.x = Math.PI / 8;
 
-        // // Option B
-        // for (let i = 0; i < 2; i++) {
-        //     const wing = this.model.children[i];
-        //     wing.rotation.y = runTime * 2;
-        // }
-        //
         this.lengthTraversed += lengthAdd;
+
+        if (this.bulletFiring.fire(1000 * runTime)) {
+            bullets.push(true);
+        }
 
         return true;
     }
@@ -137,11 +138,18 @@ class EnemyWave {
         this.cycleComplete = false;
     }
 
-    update(velocity, runTime) {
+    update(velocity, runTime, bulletsTotal) {
         if (!this.cycleComplete) {
             let allOver = true;
+
             for (const enemy of this.enemies) {
-                allOver = !enemy.update(this.curve, this.curveObject, velocity, runTime) && allOver;
+                const bullets = [];
+
+                allOver = !enemy.update(this.curve, this.curveObject, velocity, runTime, bullets) && allOver;
+
+                if (bullets.length > 0) {
+                    bulletsTotal.push(enemy.model.position);
+                }
             }
 
             if (allOver) {
@@ -197,7 +205,7 @@ class EnemyManager {
 
     static ENEMY_PER_WAVE = 5;
 
-    static SPAWN_INTERVAL = 10000;
+    static SPAWN_INTERVAL = 8000;
 
     constructor() {
         this.enemyGroups = [];
@@ -224,9 +232,9 @@ class EnemyManager {
         return objs;
     }
 
-    update(velocity, runTime) {
+    update(velocity, runTime, bulletsTotal) {
         for (const cycle of this.enemyGroups) {
-            cycle.update(velocity, runTime);
+            cycle.update(velocity, runTime, bulletsTotal);
         }
     }
 
