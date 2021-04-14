@@ -30,7 +30,7 @@ class GameObject {
     checkDisplacementValid(displacement) {
         function outside(x, dx) {
             x += dx;
-            return x < -0.9 || x > 0.8;
+            return x < -0.9 || x > 0.9;
         }
 
         const pos = this.model.position;
