@@ -341,10 +341,7 @@ class Game {
 
                 this.getGameReady();
             } else {
-                Game.toggleGameOverText();
-                Game.toggleGameReadyText();
-
-                this.gameState = Game.GameReady;
+                window.location.reload();
             }
         }
 

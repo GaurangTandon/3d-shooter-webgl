@@ -13,10 +13,12 @@ Key features:
 1. All game models are made by me in Blender on my own.
 2. Slow motion feature of original game (wherein game slows down when not touching) is implemented
 3. Enemies follow several group patterns (circles, ellipses, or straight lines)
-3. Game has endcard screen and startcard screen
-4. Stars are collectible
-5. Background has cool lighthouses to add to the environment
-6. Rest all features as said in question PDF are there
+4. Objects flying in the air cast shadow on the background
+5. Code structure is modular, and also uses a resource tracker to dispose objects which are off-screen (Low Memory Usage program)
+6. Game has endcard screen and startcard screen
+7. Stars are collectible
+8. Background has cool lighthouses to add to the environment
+9. Rest all features as said in question PDF are there
 
 ## Movie
 
