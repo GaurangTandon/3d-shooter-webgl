@@ -36,7 +36,6 @@ I made the full movie in Blender.
 4. Camera tracking is not static, rather it dynamically moves around the aeroplane in all directions (up/bottom/front/back) to give an active sense of involvement in the scene
 5. Used HDRI in the scene to give realistic background
 6. Integrated all game models in the movie (player jet, enemy drone, both bullets, lighthouse, stars)
-4. Admit it, that's some dope background music right there!
 
 List of music used (in order):
 
